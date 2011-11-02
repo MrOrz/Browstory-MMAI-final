@@ -1,0 +1,13 @@
+{
+  "name": "History Enhancement",
+  "version": "0.0.1",
+  "description": "History enhancement",
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["jquery.js", "watchr.js"]
+    }
+  ],
+  "background_page": "background.html"
+}
