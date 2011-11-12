@@ -3,92 +3,58 @@
  *
  */
 
-;(function(chrome, indexedDB, IDBKeyRange, IDBTransaction, undefined){
+;(function(chrome, undefined){
   "use strict";
   var 
     // constants
     DB_VERSION = "0.1",
-    BASIC_SCHEMA = {
-      keyPath: 'id',
-      autoIncrement: true
-    },
+    DB_SIZE = 50 * 1024 * 1024, // 10MB database
     // cached variables
-    $imgTarget,
+    $table,
+    nullHandler = function(){},
+    errHandler = function(){
+      console.error('DB error', arguments);
+    },
+    getTime = function(timestamp){
+      return "" + new Date(timestamp);
+    },
 
-    // Two helper functions that act like ActiveRecord models.
-    // These functions return objectstore objects so that they can be used as
-    // Entry().add({......}).onsuccess(callback)
-    // A fresh transaction object is constructed each time Entry() or Screenshot()
-    // is invoked, so one invocation means one database transaction.
+
+    // The variable db must be guarded because even though openDatabase() method
+    // is synchronous, its database creation callback is not.
+    // If the table 'entry' is not created before it is selected, errors would 
+    // occur.
     //
-    // references:
-    // https://developer.mozilla.org/en/IndexedDB/IDBTransaction
-    // https://developer.mozilla.org/en/IndexedDB/IDBObjectStore
-    //
-    Entry, Screenshot,
+    // reference:
+    // http://developer.apple.com/library/safari/#documentation/iPhone/Conceptual/SafariJSDatabaseGuide/UsingtheJavascriptDatabase/UsingtheJavascriptDatabase.html#//apple_ref/doc/uid/TP40007256-CH3-SW1
+    // 
+    initDB = (function(){
+      var
+        dfd = $.Deferred(),
+        db = openDatabase('link-recording', DB_VERSION, 'link recording', DB_SIZE);
 
-    // deferred object for whether the db is initialized.
-    initdb = (function(){
-      var 
-        dfd = $.Deferred(), // the deferred to return
-        req = indexedDB.open('link-record'), // open db request
-        req_ver;  // setVersion request
+      console.log('database init');
 
-      req.onerror = function(e){
+      db.transaction(function(tx){
+        tx.executeSql(
+          'CREATE TABLE IF NOT EXISTS entry(' + 
+            'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' + 
+            'url TEXT NOT NULL,' +
+            'screenshot TEXT,' +
+            'timestamp INTEGER' +
+          ');');
+      }, [], function(results){
+        // transaction success callback
+        console.log('CREATE TABLE IF NOT EXIST result:', results);
+        dfd.resolve(db);
+      }, function(tx, e){
+        // transaction error callback
+        console.error('DB Creation Error', e);
         dfd.reject(e);
-      };
+      });
 
-      req.onsuccess = function(e){
-        console.log('Database opened', db);
-
-        var 
-          db = req.result,
-          ready = function(db){
-            // populate Entry and Screenshot.
-            Entry = function(write_enable){
-              return db.transaction(['entry'], write_enable?IDBTransaction.READ_WRITE:IDBTransaction.READ_ONLY)
-                .objectStore('entry');
-            };
-            Screenshot = function(write_enable){ 
-              return db.transaction(['screenshot'], write_enable?IDBTransaction.READ_WRITE:IDBTransaction.READ_ONLY)
-                .objectStore('screenshot'); 
-            };
-
-            // database & transaction ready.
-            dfd.resolve(db);
-          };
-
-        // register database error handler
-        db.onerror = function(e){
-          // all errors of database will bubble to this error handler
-          console.error('DB Error', e);
-        };
-
-        // check and set version
-        if(db.version !== DB_VERSION){
-          console.log('setting version');
-          req_ver = db.setVersion(DB_VERSION);
-          req_ver.onsuccess = function(e){
-            // the only place we can alter database structure.
-            console.log('object store created.');
-            var entries, screenshots;
-
-            entries = db.createObjectStore('entry', BASIC_SCHEMA);
-            // TODO: entries.createIndex to speed up queries
-            screenshots = db.createObjectStore('screenshot', BASIC_SCHEMA);
-            // TODO: Screenshot.createIndex to speed up queries
-
-            ready(db);
-          };
-          req_ver.onerror = db.onerror;
-        }else{
-          // version is correct, resolve immediately
-          ready(db);
-        } 
-      }      
       return dfd.promise();
     })();
-
     // end of var declairation
 
   // add request listener
@@ -98,37 +64,36 @@
                   "from a content script:" + sender.tab.url :
                   "from the extension");
       console.log('saving',request.location);
-      initdb.done(function(db){
-        // TODO:
-        // Maybe a transaction involving both entry and screenshot
-        // is required. We should use db.transaction(['entry', 'screenshot']). ...
-        // here.
-
-        Entry(true).add({
-          id: '',
-          url: request.location
-        }).oncomplete = function(e){
-          var keypath = e.target.result;
-          console.log('new keypath', keypath);
-        };
+      initDB.done(function(db){
+        db.transaction(function(tx){
+          tx.executeSql('INSERT INTO entry (url, screenshot, timestamp) VALUES (?, ?, ?);', [request.location, 'TEST', Date.now()], function(tx, results){
+            console.log('insertion complete, results=', results);
+          }, errHandler);
+        });
       });
     }
   );
 
   // init script
   $(function(){
-    $imgTarget = $('body');
-    initdb.done(function(db){
-      // print all entry in database now
-      Entry().openCursor().onsuccess(function(e){
-        var cursor = e.target.result;
-        if(cursor){
-          console.log('entry', cursor.key, ' = ', cursor.value);
-          cursor.continue();
-        }
-      });
+    $table = $('tbody');
+    initDB.done(function(db){
+      db.readTransaction(function(tx){
+        tx.executeSql('SELECT * FROM entry;', [], function(tx, results){
+          var i, htmlStr;
+          for (i = 0; i < results.rows.length; i+=1) {
+            htmlStr += '<tr>' +
+                         '<td>' + results.rows.item(i).id + '</td>' +
+                         '<td><img src="' + results.rows.item(i).screenshot + '"/></td>' +
+                         '<td>' + results.rows.item(i).url + '</td>' +
+                         '<td>' + getTime(results.rows.item(i).timestamp) + '</td>' +
+                       '</tr>';
+          }
 
-    })
+          $table.append(htmlStr);
+        }, errHandler);
+      });
+    });
   });
   
-})(chrome, window.webkitIndexedDB, window.webkitIDBKeyRange, window.webkitIDBTransaction);
+})(chrome);
