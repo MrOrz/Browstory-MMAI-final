@@ -1,13 +1,13 @@
-<script type="text/javascript">
-"use strict";
-
-chrome.extension.onRequest.addListener(
-  function(request, sender, sendResponse) {
-    console.log(sender.tab ?
-                "from a content script:" + sender.tab.url :
-                "from the extension");
-    console.log(request.location);
-  });
-</script>
-
+<!DOCTYPE HTML>
+<html lang="en-US">
+<head>
+	<meta charset="UTF-8">
+	<title>Link Record</title>
+	<script type="text/javascript" src="jquery.min.js"></script>
+	<script type="text/javascript" src="background.js"></script>
+</head>
+<body>
+	
+</body>
+</html>
 
