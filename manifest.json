@@ -6,7 +6,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["jquery.js", "watchr.js"]
+      "js": ["jquery.min.js", "watchr.js"]
     }
   ],
   "background_page": "background.html"
