@@ -16,10 +16,14 @@
     $imgTarget,
 
     // Two helper functions that act like ActiveRecord models.
-    // These functions return transaction objects so that they can be used as
+    // These functions return objectstore objects so that they can be used as
     // Entry().add({......}).onsuccess(callback)
     // A fresh transaction object is constructed each time Entry() or Screenshot()
     // is invoked, so one invocation means one database transaction.
+    //
+    // references:
+    // https://developer.mozilla.org/en/IndexedDB/IDBTransaction
+    // https://developer.mozilla.org/en/IndexedDB/IDBObjectStore
     //
     Entry, Screenshot,
 
@@ -35,6 +39,8 @@
       };
 
       req.onsuccess = function(e){
+        console.log('Database opened', db);
+
         var 
           db = req.result,
           ready = function(db){
@@ -51,7 +57,6 @@
             // database & transaction ready.
             dfd.resolve(db);
           };
-        console.log('Database opened', db);
 
         // register database error handler
         db.onerror = function(e){
@@ -75,13 +80,12 @@
 
             ready(db);
           };
-          req_ver.onfailure = db.onerror;
+          req_ver.onerror = db.onerror;
         }else{
-          ready(db); //resolve immediately
-        }
-        
-      }
-      
+          // version is correct, resolve immediately
+          ready(db);
+        } 
+      }      
       return dfd.promise();
     })();
 
