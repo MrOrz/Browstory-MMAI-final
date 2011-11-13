@@ -25,7 +25,7 @@
       $.when($.initDB, dfdScreenshot).done(function(db, img){
         db.transaction(function(tx){
           tx.executeSql('INSERT INTO entry (url, screenshot, timestamp) VALUES (?, ?, ?);', 
-            [sender.tab.url, img, Date.now()], function(tx, results){
+            [sender.tab.url, img, request.time], function(tx, results){
             console.log('insertion complete, results=', results);
           }, function(){
             console.error('Transaction Error', arguments);
