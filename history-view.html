@@ -4,7 +4,29 @@
   <meta charset="UTF-8">
   <title>Link Record</title>
   <script type="text/javascript" src="jquery.min.js"></script>
+  <script type="text/javascript" src="db.js"></script>
   <script type="text/javascript" src="history-view.js"></script>
+
+  <style type="text/css">
+    td{
+      position: relative;
+    }
+    .thumb{
+      width: 100px;
+    }
+    .orig{ /* original image */
+      position: absolute;
+      top: 0px; left: 0px;
+      display: none;
+      z-index: 1;
+      outline: 2000px solid rgba(0,0,0,0.5); /* fake overlay XD */
+    }
+    .thumb:hover + .orig, .orig:hover{
+      /* show original image */
+      display: block;
+    }
+  </style>
+
 </head>
 <body>
   <table>
