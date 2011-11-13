@@ -64,9 +64,15 @@
                   "from a content script:" + sender.tab.url :
                   "from the extension");
       console.log('saving',request.location);
+
+      var screenshot;
+      chrome.tabs.captureVisibleTab(null, function(img) {
+        screenshot = img;
+      });
+
       initDB.done(function(db){
         db.transaction(function(tx){
-          tx.executeSql('INSERT INTO entry (url, screenshot, timestamp) VALUES (?, ?, ?);', [request.location, 'TEST', Date.now()], function(tx, results){
+          tx.executeSql('INSERT INTO entry (url, screenshot, timestamp) VALUES (?, ?, ?);', [request.location, screenshot, Date.now()], function(tx, results){
             console.log('insertion complete, results=', results);
           }, errHandler);
         });

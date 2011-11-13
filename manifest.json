@@ -3,6 +3,10 @@
   "version": "0.0.1",
   "description": "History enhancement",
 
+  "permissions": [
+    "tabs",
+    "<all_urls>"
+  ],
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
