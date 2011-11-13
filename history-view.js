@@ -1,5 +1,5 @@
 /*
- * background.js
+ * history-view.js
  *
  */
 
@@ -57,32 +57,26 @@
     })();
     // end of var declairation
 
-  // add request listener
-  chrome.extension.onRequest.addListener(
-    function(request, sender, sendResponse) {
-      console.log(sender.tab ?
-                  "from a content script:" + sender.tab.url :
-                  "from the extension");
-      console.log('saving',request.location);
+  // init script
+  $(function(){
+    $table = $('tbody');
+    initDB.done(function(db){
+      db.readTransaction(function(tx){
+        tx.executeSql('SELECT * FROM entry;', [], function(tx, results){
+          var i, htmlStr;
+          for (i = 0; i < results.rows.length; i+=1) {
+            htmlStr += '<tr>' +
+                         '<td>' + results.rows.item(i).id + '</td>' +
+                         '<td><img src="' + results.rows.item(i).screenshot + '"/></td>' +
+                         '<td>' + results.rows.item(i).url + '</td>' +
+                         '<td>' + getTime(results.rows.item(i).timestamp) + '</td>' +
+                       '</tr>';
+          }
 
-      var screenshot;
-      chrome.tabs.captureVisibleTab(null, function(img) {
-        screenshot = img;
+          $table.append(htmlStr);
+        }, errHandler);
       });
-
-      initDB.done(function(db){
-        db.transaction(function(tx){
-          tx.executeSql('INSERT INTO entry (url, screenshot, timestamp) VALUES (?, ?, ?);', [request.location, screenshot, Date.now()], function(tx, results){
-            console.log('insertion complete, results=', results);
-          }, errHandler);
-        });
-      });
-    }
-  );
-
-  chrome.browserAction.onClicked.addListener(function(tab) {
-    var history_url = chrome.extension.getURL('history-view.html');
-    chrome.tabs.create({url: history_url}, function() {});
+    });
   });
   
 })(chrome);
