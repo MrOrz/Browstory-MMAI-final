@@ -32,7 +32,8 @@
           'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' + 
           'url TEXT NOT NULL,' +
           'screenshot TEXT,' +
-          'timestamp INTEGER' +
+          'timestamp INTEGER,' +
+          'active INTEGER DEFAULT 0' +
         ');');
     }, [], function(results){
       // transaction success callback
