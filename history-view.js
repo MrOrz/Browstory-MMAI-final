@@ -1,11 +1,12 @@
+/*global chrome */
 /*
  * history-view.js
  *
  */
 
-;(function(chrome, document, undefined){
+(function(chrome, document, undefined){
   "use strict";
-  var 
+  var
     // cached variables
     $table,
     getTime = function(timestamp){
@@ -23,8 +24,8 @@
           for (i = 0; i < results.rows.length; i+=1) {
             htmlStr += '<tr>' +
                          '<td>' + results.rows.item(i).id + '</td>' +
-                         '<td><img src="' + 
-                            results.rows.item(i).screenshot + '" class="thumb" /><img src="' + 
+                         '<td><img src="' +
+                            results.rows.item(i).screenshot + '" class="thumb" /><img src="' +
                             results.rows.item(i).screenshot + '" class="orig" /></td>' +
                          '<td>' + results.rows.item(i).url + '</td>' +
                          '<td>' + getTime(results.rows.item(i).timestamp) + '</td>' +
@@ -54,5 +55,5 @@
 
     });
   });
-  
-})(chrome, document);
+
+}(chrome, document));
