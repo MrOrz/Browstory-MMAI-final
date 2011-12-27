@@ -5,6 +5,7 @@
 
   "permissions": [
     "tabs",
+    "history",
     "<all_urls>"
   ],
   "content_scripts": [
