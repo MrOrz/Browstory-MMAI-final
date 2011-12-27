@@ -1,4 +1,4 @@
-/*global chrome */
+/*global chrome, processImage */
 /*
  * background.js
  *
@@ -44,6 +44,9 @@
               db.transaction(function(tx){
                 tx.executeSql('UPDATE entry SET screenshot=? WHERE id=?;', [img, dbIdOf(windowId, tabId)]);
               }, txErr);
+
+              // process the image
+              processImage(img);
             });
           });
         },
