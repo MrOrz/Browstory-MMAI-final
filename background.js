@@ -110,7 +110,8 @@
       return ret;
     };
 
- // add request listener
+  // add request listener
+  // Fired when new page is loaded (DOM Ready)
   chrome.extension.onRequest.addListener(
     function(request, sender, sendResponse) {
       console.log(sender.tab ?
@@ -121,22 +122,42 @@
       // before inserting the record into database.
       $.when($.initDB).done(function(db){
         db.transaction(function(tx){
-          tx.executeSql('INSERT INTO entry (url, timestamp) VALUES (?, ?);',
-            [sender.tab.url, request.time], function(tx, results){
-            console.log('insertion complete, results=', results);
+          tx.executeSql('SELECT id, visits FROM entry WHERE url = ?', 
+            [sender.tab.url], function(tx, results){
 
-            // maintain dbIdOf mapping
-            dbIdOf(sender.tab.windowId, sender.tab.id, results.insertId);
+            var dbIdDfd = $.Deferred(); // resolved when dbId setting is done
 
-            if(sender.tab.active){
-              // tab is still active, take screenshot now
-              screenshot.take(sender.tab.windowId, sender.tab.id);
-            }else{
-              // tab goes inactive before page on load.
-              // register the tab in _pendingScreenshot queue
+            if(results.rows.length){ // the URL is visited before
+              // Update visits. No operations is needed after visit number is updated.
+              tx.executeSql('UPDATE entry SET visits = ? WHERE id = ?;', 
+                [results.rows.item(0).visits + 1, results.rows.item(0).id]);
 
-              screenshot.pending(sender.tab.windowId, sender.tab.id);
+              // maintain dbIdOf mapping
+              dbIdOf(sender.tab.windowId, sender.tab.id, results.rows.item(0).id);
+              dbIdDfd.resolve(sender.tab);
+            }else{  // new URL visits
+              tx.executeSql('INSERT INTO entry (url, timestamp) VALUES (?, ?);',
+                [sender.tab.url, request.time], function(tx, results){
+
+                console.log('insertion complete, results=', results);
+                // maintain dbIdOf mapping
+                dbIdOf(sender.tab.windowId, sender.tab.id, results.insertId);
+                dbIdDfd.resolve(sender.tab);
+              }, txErr);
             }
+
+            dbIdDfd.promise().done(function(tab){
+              // after dbIdOf is set, we can take screenshots now.
+              if(tab.active){
+                // tab is still active, take screenshot now
+                screenshot.take(tab.windowId, tab.id);
+              }else{
+                // tab goes inactive before page on load.
+                // register the tab in _pendingScreenshot queue
+
+                screenshot.pending(tab.windowId, tab.id);
+              }
+            });
           }, txErr);
         });
       });
