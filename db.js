@@ -33,6 +33,7 @@
           'url TEXT NOT NULL,' +
           'screenshot TEXT,' +
           'timestamp INTEGER,' +
+          'visits INTEGER DEFAULT 0,' +
           'active INTEGER DEFAULT 0' +
         ');');
     }, [], function(results){
