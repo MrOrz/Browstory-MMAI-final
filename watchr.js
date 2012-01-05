@@ -9,7 +9,9 @@
   "use strict";
   var
     blacklist = 'script,meta,embed,link,object', // HTML elements to ignore
-    bodyWidth = $('body').innerWidth(),
+    $body = $('body'), $container,
+    bodyWidth = $body.innerWidth(),
+    bodyArea = $body.width() * $body.height(),
 
     // Recursively find container element.
     // An element is called 'container' if its direct parent
@@ -17,9 +19,15 @@
     //
     findContainer = function($root){
       var
-        // select non-empty, non-blacklist children
+        // Select non-empty, non-blacklist, large-area children.
+        // 'large-area' is defined by its area portion to the entire body.
+        // > 20% is considered 'large area'.
         $children = $root.children().not(blacklist).filter(function(){
-          return $(this).children().not(blacklist).length > 0;
+          var $this = $(this);
+          return (
+            $this.width() * $this.height() > 0.2 * bodyArea &&
+            $this.children().not(blacklist).length > 0 // emptiness check
+          );
         }),
         possibleContainers = [], ret = {};
 
@@ -47,28 +55,42 @@
         });
       }
 
+      //console.log('possible containers of', $root, 'is', possibleContainers);
+
       // Pick the best (=widest) container here.
       //
 
-      ret._width = 0;
+      ret._area = 0;
       $.each(possibleContainers, function(){
         // possibleContainers is already an array of jQuery obj
-        var $elem = this;
-        if($elem.width() > ret._width){
+        var $elem = this, area = $elem.width() * $elem.height();
+        if(area > ret._area){
           ret = $elem;
-          ret._width = $elem.width();
+          ret._area = area;
         }
       });
-      delete ret._width;
+      delete ret._area;
+
+      // if no container is found when recursion backs to body,
+      // make the body itself the container
+      //
+      if($.isEmptyObject(ret) && $root === $body){
+        ret = $body;
+      }
       return ret;
     },
     initTime = Date.now();
 
   // traversing DOM structure to get the root of contents
-  console.log('container found:', findContainer($('body')));
+  // console.log('container found:', findContainer($body));
+  $container = findContainer($body);
 
   // content script runs at document_idle
-  chrome.extension.sendRequest({"time": initTime}, function(response) {
+  chrome.extension.sendRequest({
+    "time": initTime,
+    "left": $container.position().left,
+    "width": $container.width()
+  }, function(response) {
     console.log("Request send");
   });
 }(window, document));
