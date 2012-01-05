@@ -51,7 +51,7 @@
 
       // object to return
       ret = {
-        take: function(windowId, tabId){
+        take: function(windowId, tabId, request){
           console.info('Taking screenshot for (winId, tabId)=', windowId, tabId);
           chrome.tabs.captureVisibleTab(windowId, function(screenshot){
             // setting onLoadCallback within current variable namespace
@@ -61,8 +61,9 @@
               // Now $img contains shrinked image.
               // Copy the image content to canvas.
               //
-              canvas.width = 300; canvas.height = (300/img.width) * img.height;
-              canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+              canvas.width = 300; canvas.height = (300/request.width) * img.height;
+              canvas.getContext('2d').drawImage(img, 
+                request.left/request.width*300, 0, canvas.width, canvas.height);
               var dataURL = canvas.toDataURL();
               // save the canvas image to database
               //
@@ -81,12 +82,13 @@
             // this will trigger img.onload.
           });
         },
-        pending: function(windowId, tabId){
-          _pendingScreenshot[''+windowId+'-'+tabId] = true;
+        pending: function(windowId, tabId, request){
+          _pendingScreenshot[''+windowId+'-'+tabId] = request;
         },
         process: function(windowId, tabId){
-          if(_pendingScreenshot[''+windowId+'-'+tabId]){
-            ret.take(windowId, tabId);
+          var request = _pendingScreenshot[''+windowId+'-'+tabId];
+          if(request){
+            ret.take(windowId, tabId, request);
             // pending screenshot done, delete entry
             delete _pendingScreenshot[''+windowId+'-'+tabId];
           }
@@ -181,12 +183,12 @@
               // after dbIdOf is set, we can take screenshots now.
               if(tab.active){
                 // tab is still active, take screenshot now
-                screenshot.take(tab.windowId, tab.id);
+                screenshot.take(tab.windowId, tab.id, request);
               }else{
                 // tab goes inactive before page on load.
                 // register the tab in _pendingScreenshot queue
 
-                screenshot.pending(tab.windowId, tab.id);
+                screenshot.pending(tab.windowId, tab.id, request);
               }
             });
           }, txErr);
