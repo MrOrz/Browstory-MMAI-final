@@ -1,0 +1,45 @@
+/* history.scss */
+
+$bg-color-1: #fff;
+$bg-color-2: #EAEEF3;
+$border-color: #C6C9CE;
+$main-color-1: #53637D;
+
+
+@import 'compass/reset';
+@import 'compass/css3';
+
+header{
+  width: 200px;
+  height: 100%;
+  position: fixed;
+  border-right: 1px solid $border-color;
+  @include background-image(linear-gradient(left,$bg-color-2 95%, darken($bg-color-2, 6%)));
+  color: $main-color-1;
+  padding: 1em;
+  h1{
+    font-size: 20px;
+  }
+}
+#body{
+  background: $bg-color-1;
+  color: #000;
+  padding: 1em;
+  margin-left: 230px;
+
+  .item{
+    display: inline-block;
+    vertical-align: top;
+    width: 150px;
+    margin: 1em;
+    img{
+      width: 150px;
+    }
+    figcaption{
+      color: $main-color-1;
+      font-size: 11px;
+      text-align: center;
+      word-wrap: break-word;
+    }
+  }
+}

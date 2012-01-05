@@ -18,5 +18,8 @@
      "default_icon": "history.png",
      "default_title": "Show link record history!"
    },
+  "chrome_url_overrides": {
+    "history": "history.html"
+  },
   "background_page": "background.html"
 }
