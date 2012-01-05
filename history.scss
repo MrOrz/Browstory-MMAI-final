@@ -8,6 +8,7 @@ $main-color-1: #53637D;
 
 @import 'compass/reset';
 @import 'compass/css3';
+@import 'compass/typography';
 
 header{
   width: 200px;
@@ -40,6 +41,10 @@ header{
       font-size: 11px;
       text-align: center;
       word-wrap: break-word;
+    }
+    a{
+      @include hover-link;
+      @include link-colors($main-color-1, #000, #000, $main-color-1);
     }
   }
 }

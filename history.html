@@ -17,13 +17,12 @@
     </form>
   </header>
   <div id="body">
-    Yo<br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br><br>
   </div>
 
   <script id="itemTemplate" type="text/x-jquery-tmpl">
     <figure class="item">
-      <img src="${screenshot}" alt="${url}">
-      <figcaption>${url}</figcaption>
+      <a href="${url}" target="_blank"><img src="${screenshot}" alt="${url}"></a>
+      <figcaption><a href="${url}" target="_blank">${url}</a></figcaption>
     </figure>
   </script>
 </body>
