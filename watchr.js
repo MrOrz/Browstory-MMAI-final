@@ -11,7 +11,6 @@
     blacklist = 'script,meta,embed,link,object', // HTML elements to ignore
     $body = $('body'), $container,
     bodyWidth = $body.innerWidth(),
-    bodyArea = $body.width() * $body.height(),
 
     // Recursively find container element.
     // An element is called 'container' if its direct parent
@@ -21,11 +20,15 @@
       var
         // Select non-empty, non-blacklist, large-area children.
         // 'large-area' is defined by its area portion to the entire body.
-        // > 20% is considered 'large area'.
+        // > 100000 px^2 (100x1000 or 300 * 333) is considered 'large area'.
+        //
+        // Reasonable absolute pixel area is chosen here instead of ratio because
+        // coverage ratios will change on different screen resolutions.
+        //
         $children = $root.children().not(blacklist).filter(function(){
           var $this = $(this);
           return (
-            $this.width() * $this.height() > 0.2 * bodyArea &&
+            $this.width() * $this.height() > 100000 &&
             $this.children().not(blacklist).length > 0 // emptiness check
           );
         }),
