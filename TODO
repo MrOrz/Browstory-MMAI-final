@@ -1,0 +1,6 @@
+TODO:
+1. shrink to width = 300
+2. merge feature extraction
+3. add featrue to database, provide "Regenerate feature" function
+4. DOM top-down traversal, seeking for elements with width < window width. Make this element the "root" node.
+5. maybe retrieving widths and heights of second-level elements, draw rectangles with that width and height on canvas with different color, so that areas are more obvious to our segmentation program.
