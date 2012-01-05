@@ -9,9 +9,8 @@
   "use strict";
   var initTime = Date.now();
 
-  document.onready = function() {
-    chrome.extension.sendRequest({"time": initTime}, function(response) {
-      console.log("Request send");
-    });
-  };
+  // content script runs at document_idle
+  chrome.extension.sendRequest({"time": initTime}, function(response) {
+    console.log("Request send");
+  });
 }(window, document));
