@@ -35,19 +35,50 @@
     },
     screenshot = (function(){
       var _pendingScreenshot = {}, // map of pending tabs -> true
+          ret,
+          img = new Image(),
+          onLoadCallback, // image onload callback
+          canvas;
+
+      // image onload
+      //
+      img.onload = function(e){onLoadCallback(e);};
+
+      // populate canvas
+      $(function(){
+        canvas= document.getElementById('canvas'); // resize canvas
+      });
+
+      // object to return
       ret = {
         take: function(windowId, tabId){
-          $.initDB.done(function(db){
-            chrome.tabs.captureVisibleTab(windowId, function(img){
-              console.log('Taking screenshot for (winId, tabId)=', windowId, tabId);
-              // save the image into database
-              db.transaction(function(tx){
-                tx.executeSql('UPDATE entry SET screenshot=? WHERE id=?;', [img, dbIdOf(windowId, tabId)]);
-              }, txErr);
+          console.info('Taking screenshot for (winId, tabId)=', windowId, tabId);
+          chrome.tabs.captureVisibleTab(windowId, function(screenshot){
+            // setting onLoadCallback within current variable namespace
+            // (windowId, tabId available)
+            //
+            onLoadCallback = function(){
+              // Now $img contains shrinked image.
+              // Copy the image content to canvas.
+              //
+              canvas.width = 300; canvas.height = (300/img.width) * img.height;
+              canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+              var dataURL = canvas.toDataURL();
+              // save the canvas image to database
+              //
+              $.initDB.done(function(db){
+                // save the image into database
+                db.transaction(function(tx){
+                  tx.executeSql('UPDATE entry SET screenshot=? WHERE id=?;', [dataURL, dbIdOf(windowId, tabId)]);
+                }, txErr);
+                console.info('... screenshot taken.');
+                // process the image
+                processImage(dataURL);
+              });
 
-              // process the image
-              processImage(img);
-            });
+            }
+            img.src = screenshot;
+            // this will trigger img.onload.
           });
         },
         pending: function(windowId, tabId){
@@ -122,14 +153,14 @@
       // before inserting the record into database.
       $.when($.initDB).done(function(db){
         db.transaction(function(tx){
-          tx.executeSql('SELECT id, visits FROM entry WHERE url = ?', 
+          tx.executeSql('SELECT id, visits FROM entry WHERE url = ?',
             [sender.tab.url], function(tx, results){
 
             var dbIdDfd = $.Deferred(); // resolved when dbId setting is done
 
             if(results.rows.length){ // the URL is visited before
               // Update visits. No operations is needed after visit number is updated.
-              tx.executeSql('UPDATE entry SET visits = ? WHERE id = ?;', 
+              tx.executeSql('UPDATE entry SET visits = ? WHERE id = ?;',
                 [results.rows.item(0).visits + 1, results.rows.item(0).id]);
 
               // maintain dbIdOf mapping
