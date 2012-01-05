@@ -58,12 +58,27 @@
             // (windowId, tabId available)
             //
             onLoadCallback = function(){
+
               // Now $img contains shrinked image.
               // Copy the image content to canvas.
               //
               canvas.width = 300; canvas.height = (300/request.width) * img.height;
-              canvas.getContext('2d').drawImage(img, 
-                request.left/request.width*300, 0, canvas.width, canvas.height);
+
+              /*
+                         request.width
+                             -->
+                  scaled  canvas width
+                   left /    300      \
+                  ___________________________
+                 |      |             |      |
+                 |      |             |      |
+                            scaled
+                  \        img width         /
+               */
+
+              canvas.getContext('2d').drawImage(img,
+                -request.left*300/request.width, 0,
+                img.width*300/request.width, canvas.height);
               var dataURL = canvas.toDataURL();
               // save the canvas image to database
               //
