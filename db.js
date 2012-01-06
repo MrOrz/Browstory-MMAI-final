@@ -35,6 +35,7 @@
           'structure_screenshot TEXT,' +
           'timestamp INTEGER,' +
           'structure_feature TEXT,' +
+          'rect TEXT,' +
           'visits INTEGER DEFAULT 0,' +
           'active INTEGER DEFAULT 0' +
         ');');

@@ -103,8 +103,10 @@
                 // save the image into database
                 db.transaction(function(tx){
                   tx.executeSql(
-                    'UPDATE entry SET screenshot=?, structure_feature=?, structure_screenshot=? WHERE id=?;',
-                    [dataURL, JSON.stringify(structure_feature), structure_dataURL, dbIdOf(windowId, tabId)]);
+                    'UPDATE entry SET screenshot=?, structure_feature=?, structure_screenshot=?, ' +
+                    'rect=? WHERE id=?;',
+                    [dataURL, JSON.stringify(structure_feature), structure_dataURL,
+                    JSON.stringify(rect), dbIdOf(windowId, tabId)]);
                 }, txErr);
                 console.info('... screenshot taken.');
 

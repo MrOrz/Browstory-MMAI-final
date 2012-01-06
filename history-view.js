@@ -67,29 +67,29 @@
           $tr = $(this).parents('tr'),
           id = $(this).data('id'),
           canvas = $('<canvas></canvas>').get(0),
-          structure_feature, structure_screenshot;
+          structure_feature, structure_screenshot,
+          rect = $(this).data('rect');
 
         canvas.width = img.width; canvas.height = img.height;
         canvas.getContext('2d').drawImage(img, 0, 0);
 
         // get new feature from item.screenshot
         //
-        structure_feature = segmentation(canvas);
+        structure_feature = segmentation(canvas, rect);
         structure_screenshot = structure_feature.canvas.toDataURL();
         structure_feature = JSON.stringify(structure_feature);
 
         $.initDB.done(function(db){
           db.transaction(function(tx){
-            tx.executeSql('UPDATE structure_feature SET structure_feature = ?, structure_screenshot WHERE id = ?',
+            tx.executeSql('UPDATE entry SET structure_feature = ?, structure_screenshot = ? WHERE id = ?',
               [
                 structure_feature,
                 structure_screenshot, id
-              ],
-              function(){
-                console.error('Update Error', arguments);
-              }
+              ]
             );
-          });
+          },
+            function(){ console.error('Update transaction error', arguments);}
+          );
         });
 
         // update table
