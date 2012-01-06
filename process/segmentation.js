@@ -1,5 +1,5 @@
 "use strict"
-function segmentation(img){
+function segmentation(img, debug){
 	var hor = new Array(3),
 		ver = new Array(3),
 		i,j,cut,maxcut,maxdiff,diff,
@@ -91,12 +91,14 @@ function segmentation(img){
 		}
 	}
 
-	// FIXME: debug purpose
-	var imgToShow = new Image();
-	imgToShow.onload = function(){
-		document.body.appendChild(imgToShow);
+	if(debug){
+		// FIXME: debug purpose
+		var imgToShow = new Image();
+		imgToShow.onload = function(){
+			document.body.appendChild(imgToShow);
+		}
+		imgToShow.src = canvas.toDataURL();
 	}
-	imgToShow.src = canvas.toDataURL();
 
 	console.log('L:'+L);
 	// Layout feature extraction

@@ -85,7 +85,7 @@
               $.initDB.done(function(db){
                 // process the image
                 //
-                var structure_feature = segmentation(canvas),
+                var structure_feature = segmentation(canvas, true),
                   structure_dataURL = canvas.toDataURL();
                 console.log('structure feature: ', structure_feature);
                 // save the image into database
