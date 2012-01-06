@@ -2,10 +2,11 @@
 function segmentation(img){
 	var hor = new Array(3),
 		ver = new Array(3),
-		i,j,cut,maxcut,maxdiff,diff;
+		i,j,cut,maxcut,maxdiff,diff,
+		width = img.width, height = img.height;
 	hor[0] = ver[0] = hor[3] = ver[3] = 0;
 	for(i=1; i<=7; i+=2)
-	{	
+	{
 		var	cropimage = Pixastic.process(img, "crop", {
 			rect : {
 				left : Math.floor(width/3)*(i%3), top : Math.floor(height/3)*Math.floor(i/3), width : Math.ceil(width/3), height : Math.ceil(height/3)
@@ -46,7 +47,7 @@ function segmentation(img){
 			ver[(i-1)/2] = ((i-1)/2==2)?maxcut:Math.ceil(width/3)-maxcut;
 		}
 	}
-	
+
 	// Similarity test among nine blocks
 	var adj = new Array(8);
 		adj[0] = [1,3];
@@ -62,7 +63,7 @@ function segmentation(img){
 		L = new Array(8),
 		thr = 0.001;
 	for(i=0; i<=8; i++)
-	{	
+	{
 		L[i]=i;
 		cropimage[i] = img.getContext('2d').getImageData(Math.floor(width/3)*(i%3)+(i%3==1?-1:1)*ver[i%3], Math.floor(height/3)*Math.floor(i/3)+(Math.floor(i/3)==1?-1:1)*hor[Math.floor(i/3)], Math.ceil(width/3)-(i%3==1?-1:1)*ver[i%3]-(i%3==1?-1:1)*ver[i%3+1], Math.ceil(height/3)-(Math.floor(i/3)==1?-1:1)*hor[Math.floor(i/3)]-(Math.floor(i/3)==1?-1:1)*hor[Math.floor(i/3)+1]).data;
 	}
@@ -78,7 +79,7 @@ function segmentation(img){
 	ctx.fillRect(Math.floor(width/3)-ver[1],0,2,height);
 	ctx.fillRect(Math.floor(width/3)*2+ver[2],0,2,height);
 	for(i=0; i<=8; i++) //cluster among adjacent blocks
-	{	
+	{
 		for(j=0; j<adj[i].length; j++)
 		{
 			diff = distance(cropimage[i],cropimage[adj[i][j]]);
@@ -88,8 +89,15 @@ function segmentation(img){
 				L[adj[i][j]]=L[i];
 			}
 		}
-	}	
-	document.body.appendChild(canvas);
+	}
+
+	// FIXME: debug purpose
+	var imgToShow = new Image();
+	imgToShow.onload = function(){
+		document.body.appendChild(imgToShow);
+	}
+	imgToShow.src = canvas.toDataURL();
+
 	console.log('L:'+L);
 	// Layout feature extraction
 	var F = [0,0,0,0,0,0];
@@ -130,6 +138,6 @@ function segmentation(img){
 				F[i+3] = 3;
 			}
 		}
-	}	
+	}
 	console.log('F:'+F);
 }
