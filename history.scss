@@ -10,6 +10,10 @@ $main-color-1: #53637D;
 @import 'compass/css3';
 @import 'compass/typography';
 
+$base-font-size: 11px;
+$base-line-height: 18px;
+@include establish-baseline();
+
 header{
   width: 200px;
   height: 100%;
@@ -19,7 +23,7 @@ header{
   color: $main-color-1;
   padding: 1em;
   h1{
-    font-size: 20px;
+    @include adjust-font-size-to(24px);
   }
 }
 #body{
@@ -28,23 +32,40 @@ header{
   padding: 1em;
   margin-left: 230px;
 
-  .item{
-    display: inline-block;
-    vertical-align: top;
-    width: 150px;
-    margin: 1em;
+  h1{
+    @include adjust-font-size-to(18px);
+    color: $main-color-1;
+  }
+}
+#hidden{
+  overflow: hidden;
+  height: 0;
+}
+
+.item{
+  $item-width: 200px;
+  display: inline-block;
+  vertical-align: top;
+  width: $item-width;
+  margin: 1em;
+  .thumb{
+    width: $item-width;
+  }
+  figcaption{
+    color: $main-color-1;
+    text-align: center;
+    width: $item-width;
+    height: $base-line-height;
+    @include ellipsis;
+    img, a{
+      vertical-align: middle;
+    }
     img{
-      width: 150px;
+      margin-right: 0.2em;
     }
-    figcaption{
-      color: $main-color-1;
-      font-size: 11px;
-      text-align: center;
-      word-wrap: break-word;
-    }
-    a{
-      @include hover-link;
-      @include link-colors($main-color-1, #000, #000, $main-color-1);
-    }
+  }
+  a{
+    @include hover-link;
+    @include link-colors($main-color-1, #000, #000, $main-color-1);
   }
 }

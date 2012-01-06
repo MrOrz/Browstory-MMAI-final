@@ -17,12 +17,21 @@
     </form>
   </header>
   <div id="body">
-  </div>
+    <section>
+      <h1>Recently Viewed</h1>
+      <div id="recent-target"></div>
+    </section>
 
+
+  </div>
+  <div id="hidden"></div>
   <script id="itemTemplate" type="text/x-jquery-tmpl">
     <figure class="item">
-      <a href="${url}" target="_blank"><img src="${screenshot}" alt="${url}"></a>
-      <figcaption><a href="${url}" target="_blank">${url}</a></figcaption>
+      <a href="${url}" target="_blank"><img class="thumb" src="${screenshot}" alt="Screenshot pending"></a>
+      <figcaption title="${title}">
+        <img src="chrome://favicon/${url}" />
+        <a href="${url}" target="_blank">${title}</a>
+      </figcaption>
     </figure>
   </script>
 </body>
