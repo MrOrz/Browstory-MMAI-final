@@ -119,7 +119,9 @@
   for(var i = 2; i <= 3; i+=1){
     $container = findContainer($container);
     console.log('level', i, 'container: ', $container);
-
+    if($.isEmptyObject($container)){ // no container will be found any further
+      break;
+    }
     containers.push({
       left: $container.offset().left - containers[0].left,
       top: $container.offset().top,
@@ -129,11 +131,16 @@
   }
 
   console.log('container[]:', containers);
-  // content script runs at document_idle
-  chrome.extension.sendRequest({
-    "time": initTime,
-    container:containers
-  }, function(response) {
-    console.log("Request send");
+
+  // send sendRequest on window.onload
+  // so that almost all images are received
+  //
+  $(window).load(function(){
+    chrome.extension.sendRequest({
+      "time": initTime,
+      container:containers
+    }, function(response) {
+      console.log("--- content script sent and returned ---");
+    });
   });
 }(window, document));
