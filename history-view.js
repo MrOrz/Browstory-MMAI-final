@@ -43,7 +43,7 @@
       $.initDB.done(function(db){
         db.transaction(function(tx){
           tx.executeSql('DROP TABLE IF EXISTS entry;', [], function(tx, results){
-            location.reload();
+            $('body').text('Table dropped, please reload plugin to create table');
           });
         });
 
