@@ -4,4 +4,5 @@ v 2. merge feature extraction
 v 3. add featrue to database, provide "Regenerate feature" function
 v 4. DOM top-down traversal, seeking for elements with width < window width. Make this element the "root" node.
 v 5. maybe retrieving widths and heights of second-level elements, draw rectangles with that width and height on canvas with different color, so that areas are more obvious to our segmentation program.
-6. query interface
+v 6. save rect for future feature regeneration
+7. query interface
