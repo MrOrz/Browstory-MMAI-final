@@ -54,7 +54,9 @@
     // regenerate feature button
     //
     $('.regenerate').click(function(){
+      $(this).addClass('processing');
       if(!confirm('Are you sure to regenerate all feature?')){
+        $(this).removeClass('processing');
         return false;
       }
 
@@ -94,8 +96,9 @@
         $tr.find('.structure-thumb, .structure-orig').attr('src', structure_screenshot);
         $tr.find('.structure-feature').text(structure_feature);
       });
+      $('.done').show().delay(1000).fadeOut('slow');
+      $(this).removeClass('processing');
     });
-
 
   });
 

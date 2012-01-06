@@ -31,11 +31,18 @@
       /* show original image */
       display: block;
     }
+    .processing{
+      opacity: 0.2;
+    }
+    .done{
+      color: green;
+      display: none;
+    }
   </style>
 
 </head>
 <body>
-  <a href="javascript:;" class="cleardb">Clear database</a> | <a href="javascript:;" class="regenerate">Regenerate Feature</a><br />
+  <a href="javascript:;" class="cleardb">Clear database</a> | <a href="javascript:;" class="regenerate">Regenerate Feature</a> <span class="done">Done!</span><br />
   <table>
     <thead>
       <tr>
