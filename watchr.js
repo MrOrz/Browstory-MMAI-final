@@ -121,13 +121,14 @@
     console.log('level', i, 'container: ', $container);
 
     containers.push({
-      left: $container.offset().left - $container[0].left + parseInt($container.css('marginLeft'), 10),
-      top: $container.offset().top + parseInt($container.css('marginTop'), 10),
+      left: $container.offset().left - containers[0].left,
+      top: $container.offset().top,
       width: $container.innerWidth(),
       height: $container.innerHeight()
     });
   }
 
+  console.log('container[]:', containers);
   // content script runs at document_idle
   chrome.extension.sendRequest({
     "time": initTime,
