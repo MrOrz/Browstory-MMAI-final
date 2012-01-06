@@ -33,6 +33,7 @@
           'url TEXT NOT NULL,' +
           'screenshot TEXT,' +
           'timestamp INTEGER,' +
+          'structure_feature TEXT,' +
           'visits INTEGER DEFAULT 0,' +
           'active INTEGER DEFAULT 0' +
         ');');
