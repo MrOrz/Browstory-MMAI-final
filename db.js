@@ -32,6 +32,7 @@
           'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
           'url TEXT NOT NULL,' +
           'screenshot TEXT,' +
+          'structure_screenshot TEXT,' +
           'timestamp INTEGER,' +
           'structure_feature TEXT,' +
           'visits INTEGER DEFAULT 0,' +

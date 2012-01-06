@@ -85,10 +85,14 @@
               $.initDB.done(function(db){
                 // process the image
                 //
-                var structure_feature = segmentation(canvas);
+                var structure_feature = segmentation(canvas),
+                  structure_dataURL = canvas.toDataURL();
+                console.log('structure feature: ', structure_feature);
                 // save the image into database
                 db.transaction(function(tx){
-                  tx.executeSql('UPDATE entry SET screenshot=? WHERE id=?;', [dataURL, dbIdOf(windowId, tabId)]);
+                  tx.executeSql(
+                    'UPDATE entry SET screenshot=?, structure_feature=?, structure_screenshot=? WHERE id=?;',
+                    [dataURL, structure_feature, structure_dataURL, dbIdOf(windowId, tabId)]);
                 }, txErr);
                 console.info('... screenshot taken.');
 
