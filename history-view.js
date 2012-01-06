@@ -1,4 +1,4 @@
-/*global chrome */
+/*global chrome, segmentation */
 /*
  * history-view.js
  *
@@ -22,20 +22,11 @@
     $.initDB.done(function(db){
       db.readTransaction(function(tx){
         tx.executeSql('SELECT * FROM entry;', [], function(tx, results){
-          var i, htmlStr = "";
+          var i, rows = [];
           for (i = 0; i < results.rows.length; i+=1) {
-            htmlStr += '<tr>' +
-                         '<td>' + results.rows.item(i).id + '</td>' +
-                         '<td><img src="' +
-                            results.rows.item(i).screenshot + '" class="thumb" /><img src="' +
-                            results.rows.item(i).screenshot + '" class="orig" /></td>' +
-                         '<td>' + results.rows.item(i).url + '</td>' +
-                         '<td>' + getTime(results.rows.item(i).timestamp) + '</td>' +
-                         '<td>' + results.rows.item(i).structure_feature + '</td>' +
-                         '<td>' + results.rows.item(i).active + '</td>' +
-                       '</tr>';
+            rows.push(results.rows.item(i));
           }
-          document.getElementById('tbody').innerHTML = htmlStr;
+          $('#rowTemplate').tmpl(rows, {getTime:getTime}).appendTo($('#tbody'));
           //$table.append(htmlStr);
         }, function(){
           console.error('Read Transaction Error', arguments);
@@ -72,14 +63,31 @@
       db.transaction(function(tx){
         tx.executeSql('SELECT id, url, screenshot FROM entry;', [], function(tx, results){
           var structure_feature, item, i;
-
+          // for each existing entries
+          //
           for (i = 0; i < results.rows.length; i+=1) {
             item = results.rows.item(i);
             console.log('Processing: ', item.url);
-            // get new feature from item.screenshot
-            // TODO
-            tx.executeSql('UPDATE structure_feature SET structure_feature = ? WHERE id = ?',
-             [structure_feature, item.id])
+            (function(item){
+              // create a closure because we want an image and canvas for each entry.
+              //
+
+              // load the image first
+              var img = new Image(); // <img> to load screenshot in db
+              img.onload = function(){
+                var canvas = $('<canvas />').get(0);
+                canvas.width = img.width; canvas.height = img.height;
+                canvas.getContext('2d').drawImage(img, 0, 0);
+                // get new feature from item.screenshot
+                //
+                structure_feature = segmentation(canvas);
+                tx.executeSql('UPDATE structure_feature SET structure_feature = ?, structure_screenshot WHERE id = ?',
+                 [structure_feature, canvas.toDataURL(), item.id], function(){
+                  console.error('Update Error', arguments);
+                });
+              }
+              img.src = item.screenshot;
+            }(item));
           }
         }, function(){
           console.error('Transaction Error', arguments);

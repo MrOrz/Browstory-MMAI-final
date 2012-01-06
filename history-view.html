@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <title>Link Record</title>
   <script type="text/javascript" src="jquery.min.js"></script>
+  <script type="text/javascript" src="jquery.tmpl.js"></script>
   <script type="text/javascript" src="db.js"></script>
   <script type="text/javascript" src="history-view.js"></script>
 
@@ -11,17 +12,18 @@
     td{
       position: relative;
     }
-    .thumb{
+    .ss-thumb, .structure-thumb{
       width: 100px;
     }
-    .orig{ /* original image */
+    .ss-orig, .structure-orig{ /* original image */
       position: absolute;
       top: 0px; left: 0px;
       display: none;
       z-index: 1;
       outline: 2000px solid rgba(0,0,0,0.5); /* fake overlay XD */
     }
-    .thumb:hover + .orig, .orig:hover{
+    .ss-thumb:hover+.ss-orig, .ss-orig:hover,
+    .structure-thumb:hover+.structure-orig, .structure-orig:hover{
       /* show original image */
       display: block;
     }
@@ -29,21 +31,40 @@
 
 </head>
 <body>
-  <a href="javascript:;" class="cleardb">Clear database</a><br />
+  <a href="javascript:;" class="cleardb">Clear database</a> | <a href="javascript:;" class="regenerate">Regenerate Feature</a><br />
   <table>
     <thead>
       <tr>
         <th>id</th>
         <th>screenshot</th>
+        <th>structure</th>
         <th>url</th>
         <th>time</th>
         <th>active</th>
       </tr>
     </thead>
-   
+
     <tbody id="tbody">
-      
+
     </tbody>
   </table>
+
+  <script id="rowTemplate" type="text/x-jquery-tmpl">
+    <tr>
+      <td>${id}</td>
+      <td>
+        <img src="${screenshot}" class="ss-thumb" />
+        <img src="${screenshot}" class="ss-orig" data-id="${id}" />
+      </td>
+      <td>
+        <img src="${structure_screenshot}" class="structure-thumb" />
+        <img src="${structure_screenshot}" class="structure-orig" data-id="${id}" />
+        ${structure_feature}
+      </td>
+      <td>${url}</td>
+      <td>${$item.getTime(timestamp)}</td>
+      <td>${active}</td>
+   </tr>
+  </script>
 </body>
 </html>
