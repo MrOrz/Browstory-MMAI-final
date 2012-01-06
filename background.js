@@ -1,4 +1,4 @@
-/*global chrome, processImage */
+/*global chrome, segmentation */
 /*
  * background.js
  *
@@ -83,13 +83,15 @@
               // save the canvas image to database
               //
               $.initDB.done(function(db){
+                // process the image
+                //
+                var structure_feature = segmentation(canvas);
                 // save the image into database
                 db.transaction(function(tx){
                   tx.executeSql('UPDATE entry SET screenshot=? WHERE id=?;', [dataURL, dbIdOf(windowId, tabId)]);
                 }, txErr);
                 console.info('... screenshot taken.');
-                // process the image
-                processImage(dataURL);
+
               });
 
             }
