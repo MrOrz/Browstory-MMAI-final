@@ -86,13 +86,13 @@
                 // process the image
                 //
                 var structure_feature = segmentation(canvas, true),
-                  structure_dataURL = canvas.toDataURL();
+                  structure_dataURL = structure_feature.canvas.toDataURL();
                 console.log('structure feature: ', structure_feature);
                 // save the image into database
                 db.transaction(function(tx){
                   tx.executeSql(
                     'UPDATE entry SET screenshot=?, structure_feature=?, structure_screenshot=? WHERE id=?;',
-                    [dataURL, structure_feature, structure_dataURL, dbIdOf(windowId, tabId)]);
+                    [dataURL, JSON.stringify(structure_feature), structure_dataURL, dbIdOf(windowId, tabId)]);
                 }, txErr);
                 console.info('... screenshot taken.');
 
