@@ -142,4 +142,6 @@ function segmentation(img, debug){
 		}
 	}
 	console.log('F:'+F);
+	F.canvas = canvas;
+	return F;
 }

@@ -6,6 +6,10 @@
   <script type="text/javascript" src="jquery.min.js"></script>
   <script type="text/javascript" src="jquery.tmpl.js"></script>
   <script type="text/javascript" src="db.js"></script>
+  <script type="text/javascript" src="process/pixastic/pixastic.core.js"></script>
+  <script type="text/javascript" src="process/pixastic/actions/crop.js"></script>
+  <script type="text/javascript" src="process/util.js"></script>
+  <script type="text/javascript" src="process/segmentation.js"></script>
   <script type="text/javascript" src="history-view.js"></script>
 
   <style type="text/css">
@@ -59,7 +63,9 @@
       <td>
         <img src="${structure_screenshot}" class="structure-thumb" />
         <img src="${structure_screenshot}" class="structure-orig" data-id="${id}" />
-        ${structure_feature}
+        <span class="structure-feature">
+          ${structure_feature}
+        </span>
       </td>
       <td>${url}</td>
       <td>${$item.getTime(timestamp)}</td>
