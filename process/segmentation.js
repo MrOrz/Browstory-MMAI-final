@@ -15,7 +15,7 @@ function segmentation(img, debug){
 		if(i%3==1)
 		{
 			maxdiff = -1;
-			for(cut=1; cut<Math.ceil(height/3); cut+=5)
+			for(cut=1; cut<Math.ceil(height/3); cut+=1)
 			{
 				var top = cropimage.getContext('2d').getImageData(0, 0, Math.ceil(width/3), cut).data,
 					bottom = cropimage.getContext('2d').getImageData(0, cut, Math.ceil(width/3), Math.ceil(height/3)-cut).data;
@@ -32,7 +32,7 @@ function segmentation(img, debug){
 		else
 		{
 			maxdiff = -1;
-			for(cut=1; cut<Math.ceil(width/3); cut+=5)
+			for(cut=1; cut<Math.ceil(width/3); cut+=1)
 			{
 				var left = cropimage.getContext('2d').getImageData(0, 0, cut, Math.ceil(height/3)).data,
 					right = cropimage.getContext('2d').getImageData(cut, 0, Math.ceil(width/3)-cut, Math.ceil(height/3)).data;
