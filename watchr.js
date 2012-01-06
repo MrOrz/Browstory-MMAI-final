@@ -145,6 +145,6 @@
     chrome.extension.sendRequest({
       "time": initTime,
       container:containers
-    });
+    }, function(resp){console.log(resp)});
   });
 }(window, document));
