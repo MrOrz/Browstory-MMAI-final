@@ -31,12 +31,15 @@
         'CREATE TABLE IF NOT EXISTS entry(' +
           'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
           'url TEXT NOT NULL,' +
+          'title TEXT,' +
           'screenshot TEXT,' +
           'structure_screenshot TEXT,' +
           'timestamp INTEGER,' +
           'structure_feature TEXT,' +
           'rect TEXT,' +
           'visits INTEGER DEFAULT 0,' +
+          'lastview INTEGER DEFAULT 0,' +
+            // updated even on tab switching! Different from HistoryItem's lastVisited
           'active INTEGER DEFAULT 0' +
         ');');
     }, [], function(results){

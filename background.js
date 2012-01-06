@@ -134,32 +134,34 @@
     // getter / setter of _selectedTab.
     // the setter returns the old value.
     selectedTab = function(windowId, tabId){
-      var ret = _selectedTab, activeTime, dbId;
+      var ret = _selectedTab, activeTime, lastViewed, dbId;
 
       if(arguments.length === 2){ // setter
         if(ret){ // if has old selected tab
           dbId = dbIdOf(ret.windowId, ret.tabId); // find its db id
 
           if(dbId){ // if it is registered in db
-          activeTime = Date.now() - ret.activated;
+            lastViewed = Date.now();
+            activeTime = lastViewed - ret.activated;
             // update the entry of original selected tab
             $.initDB.done(function(db){
               db.transaction(function(tx){
                   // the database id of original tab.
 
-                console.log('SELECT active FROM entry WHERE id = ?;', dbId);
+                //console.log('SELECT active FROM entry WHERE id = ?;', dbId);
                 // select original active time
                 tx.executeSql('SELECT active FROM entry WHERE id = ?;', [dbId], function(tx, results){
-                  console.log('original tab active time', results);
+                  //console.log('original tab active time', results);
                   if(results.rows.length === 0){ // TODO: fix this
                     return;
                   }
                   var active = results.rows.item(0).active;
 
-                  tx.executeSql('UPDATE entry SET active = ? WHERE id = ?;',
-                    [active + activeTime, dbId],
+                  tx.executeSql('UPDATE entry SET active = ?, lastview = ? WHERE id = ?;',
+                    [active + activeTime, lastViewed, dbId],
                     function(tx, results){
-                      console.log('UPDATE result', results, 'active time becomes ', active + activeTime);
+                      console.log('UPDATE result', results, 'active time becomes ', active + activeTime, 
+                        ', last viewed: ', lastViewed);
                     }, txErr
                   );
                 }, txErr);
@@ -197,15 +199,15 @@
 
             if(results.rows.length){ // the URL is visited before
               // Update visits. No operations is needed after visit number is updated.
-              tx.executeSql('UPDATE entry SET visits = ? WHERE id = ?;',
-                [results.rows.item(0).visits + 1, results.rows.item(0).id]);
+              tx.executeSql('UPDATE entry SET title = ?, visits = ?, lastview = ? WHERE id = ?;',
+                [request.title, results.rows.item(0).visits + 1, Date.now(), results.rows.item(0).id]);
 
               // maintain dbIdOf mapping
               dbIdOf(sender.tab.windowId, sender.tab.id, results.rows.item(0).id);
               dbIdDfd.resolve(sender.tab);
             }else{  // new URL visits
-              tx.executeSql('INSERT INTO entry (url, timestamp) VALUES (?, ?);',
-                [sender.tab.url, request.time], function(tx, results){
+              tx.executeSql('INSERT INTO entry (title, url, timestamp, lastview) VALUES (?, ?, ?, ?);',
+                [request.title, sender.tab.url, request.time, Date.now()], function(tx, results){
 
                 console.log('insertion complete, results=', results);
                 // maintain dbIdOf mapping
@@ -244,12 +246,16 @@
   chrome.tabs.onActiveChanged.addListener(function(tabId, selectInfo){
     var origSelectedTab = selectedTab(selectInfo.windowId, tabId), // set new selected tab
       tab = selectedTab();
-    console.log('Tab changed from' , origSelectedTab, ' to tab ', tab );
+    //console.log('Tab changed from' , origSelectedTab, ' to tab ', tab );
 
     if(tab){
         // take screenshot if the selected tab is in _pendingScreenshot
         screenshot.process(tab.windowId, tab.tabId);
       }
+  });
+
+  chrome.history.onVisited.addListener(function(result) {
+    console.log('history', result);
   });
 
   console.log('background.js initialized.');

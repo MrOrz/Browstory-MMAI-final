@@ -144,6 +144,7 @@
     // send request to background
     chrome.extension.sendRequest({
       "time": initTime,
+      title: document.title,
       container:containers
     }, function(resp){console.log(resp)});
   });
