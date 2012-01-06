@@ -1,5 +1,14 @@
 "use strict"
-function segmentation(img, debug){
+function segmentation(img, rect, debug){
+	var ctx = img.getContext('2d');
+	ctx.fillStyle = '#ff0000';
+	ctx.fillRect(rect[0].left, rect[0].top,
+		rect[0].width, rect[0].height);
+	ctx.fillStyle = '#00ff00';
+	ctx.fillRect(rect[1].left, rect[1].top,
+		rect[1].width, rect[1].height);
+
+	// start segmentation
 	var hor = new Array(3),
 		ver = new Array(3),
 		i,j,cut,maxcut,maxdiff,diff,

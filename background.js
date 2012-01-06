@@ -62,7 +62,10 @@
               // Now $img contains shrinked image.
               // Copy the image content to canvas.
               //
-              canvas.width = 300; canvas.height = (300/request.width) * img.height;
+              var cropContainer = request.container[0],
+                  shrinkRatio = 300/cropContainer.width,
+                  rect = request.container.slice(1);
+              canvas.width = 300; canvas.height = shrinkRatio * img.height;
 
               /*
                          request.width
@@ -77,15 +80,24 @@
                */
 
               canvas.getContext('2d').drawImage(img,
-                -request.left*300/request.width, 0,
-                img.width*300/request.width, canvas.height);
+                -cropContainer.left*shrinkRatio, 0,
+                img.width*shrinkRatio, canvas.height);
+
+              // shrinking the rect
+              //
+              $.each(rect, function(i, r){
+                rect[i].left *= shrinkRatio;
+                rect[i].top *= shrinkRatio;
+                rect[i].width *= shrinkRatio;
+                rect[i].height *= shrinkRatio;
+              })
               var dataURL = canvas.toDataURL();
               // save the canvas image to database
               //
               $.initDB.done(function(db){
                 // process the image
                 //
-                var structure_feature = segmentation(canvas, true),
+                var structure_feature = segmentation(canvas, rect, true),
                   structure_dataURL = structure_feature.canvas.toDataURL();
                 console.log('structure feature: ', structure_feature);
                 // save the image into database
