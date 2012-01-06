@@ -136,11 +136,15 @@
   // so that almost all images are received
   //
   $(window).load(function(){
+    // update top information using document.body.scrollTop
+    $.each(containers, function(idx){
+      containers[idx].top -= document.body.scrollTop;
+    });
+
+    // send request to background
     chrome.extension.sendRequest({
       "time": initTime,
       container:containers
-    }, function(response) {
-      console.log("--- content script sent and returned ---");
     });
   });
 }(window, document));
