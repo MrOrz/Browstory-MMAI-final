@@ -11,24 +11,23 @@
     blacklist = 'script,meta,embed,link,object', // HTML elements to ignore
     $body = $('body'), $container,
     bodyWidth = $body.innerWidth(),
+    childrenFilter, // function that determines whether to count $child as $root's child.
+    containsContainer, // function that determines whether an element is possible to contain a container
 
     // Recursively find container element.
     // An element is called 'container' if its direct parent
     // node has width >= bodyWidth and itself containing elements.
     //
+    // This recursion function requires childrenFilter() and containsContainer() to be set!
+    //
     findContainer = function($root){
       var
         // Select non-empty, non-blacklist, large-area children.
-        // 'large-area' is defined by its area portion to the entire body.
-        // > 100000 px^2 (100x1000 or 300 * 333) is considered 'large area'.
-        //
-        // Reasonable absolute pixel area is chosen here instead of ratio because
-        // coverage ratios will change on different screen resolutions.
         //
         $children = $root.children().not(blacklist).filter(function(){
           var $this = $(this);
           return (
-            $this.width() * $this.height() > 100000 &&
+            childrenFilter($root, $this) &&
             $this.children().not(blacklist).length > 0 // emptiness check
           );
         }),
@@ -41,7 +40,7 @@
         var $child = $(this), container;
         // the container should reside on elements whose width >= bodyWidth.
         // so use this child as root to find Container.
-        if($child.width() >= bodyWidth){
+        if(containsContainer($root, $child)){
           container = findContainer($child);
           if(!$.isEmptyObject(container)){
             possibleContainers.push(container);
@@ -82,17 +81,57 @@
       }
       return ret;
     },
-    initTime = Date.now();
+    containers = [], // the containers to send to background
+    initTime = Date.now(); // end of var statement
 
   // traversing DOM structure to get the root of contents
   // console.log('container found:', findContainer($body));
+  // 'large-area' is defined by its area portion to the entire body.
+  // > 100000 px^2 (100x1000 or 300 * 333) is considered 'large area'.
+  //
+  // Reasonable absolute pixel area is chosen here instead of ratio because
+  // coverage ratios will change on different screen resolutions.
+  childrenFilter = function($root, $child){
+    return ($child.width() * $child.height() > 100000);
+  };
+  containsContainer = function($root, $child){
+    return ($child.width() >= bodyWidth);
+  };
   $container = findContainer($body);
+  console.log('container: ', $container);
+  containers.push({
+    left: $container.offset().left,
+    top: $container.offset().top,
+    width: $container.innerWidth(),
+    height: $container.innerHeight()
+  });
+
+  // Find sub-areas to fill in color.
+  // The following steps requires a new set of childrenFilter() and containsContainer()
+  //
+  childrenFilter = function($root, $child){
+    return ($child.width() * $child.height() > 0.2 * $root.width() * $root.height());
+  };
+  containsContainer = function($root, $child){
+    return ($child.width() * $child.height() >= 0.9 * $root.width() * $root.height());
+  }
+
+  for(var i = 2; i <= 3; i+=1){
+    $container = findContainer($container);
+    console.log('level', i, 'container: ', $container);
+
+    containers.push({
+      left: $container.offset().left - $container[0].left + parseInt($container.css('marginLeft'), 10),
+      top: $container.offset().top + parseInt($container.css('marginTop'), 10),
+      width: $container.innerWidth(),
+      height: $container.innerHeight()
+    });
+  }
 
   // content script runs at document_idle
   chrome.extension.sendRequest({
     "time": initTime,
-    "left": $container.position().left,
-    "width": $container.width()
+    container:containers
   }, function(response) {
     console.log("Request send");
   });
