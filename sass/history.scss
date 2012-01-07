@@ -31,6 +31,8 @@ header{
   #query{ // the canvas
     border: 1px solid $border-color;
     background: url(../images/checkerboard.jpg);
+    cursor: crosshair;
+    border-radius: 3px;
     box-shadow: inset 0px 2px 4px rgba(#000, .5), 0 2px 1px rgba(#fff, .9);
   }
 
@@ -51,19 +53,28 @@ header{
   height: 0;
 }
 
+#recent-target{
+  text-align: center;
+}
+
+// item style
 .item{
   $item-width: 200px;
+
   display: inline-block;
-  vertical-align: top;
-  width: $item-width;
+  vertical-align: bottom;
   margin: 1em;
   .thumb{
-    width: $item-width;
+    width: 100%;
+    border: 1px solid $border-color;
+  }
+  &:hover .thumb{
+    box-shadow: 0 2px 5px #aaa;
   }
   figcaption{
     color: $main-color-1;
     text-align: center;
-    width: $item-width;
+    width: 100%;
     height: $base-line-height;
     @include ellipsis;
     img, a{
@@ -76,5 +87,21 @@ header{
   a{
     @include hover-link;
     @include link-colors($main-color-1, #000, #000, $main-color-1);
+  }
+  width: $item-width;
+  &.large{
+    width: 300px;
+  }
+  &.small{
+    width: 150px;
+    @include adjust-font-size-to(0.9 * $base-font-size);
+  }
+  &.tiny{
+    width: 100px;
+    @include adjust-font-size-to(0.6 * $base-font-size);
+    @include adjust-leading-to(0.5);
+    figcaption img{
+      display: none;
+    }
   }
 }
