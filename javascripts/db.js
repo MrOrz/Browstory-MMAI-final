@@ -43,6 +43,7 @@
         ');'
       );
       tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS entry_idx ON entry(url);');
+
       tx.executeSql(
         'CREATE TABLE IF NOT EXISTS structure(' +
           'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
@@ -56,25 +57,25 @@
         ');'
       );
       tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS structure_idx ON structure(entry_id);');
-      /*
+
+      var i, query = [];
+      // a0 b0 c0 d0 a1 b1 c1 d1 ...... a8 b8 c8 d8.
+      for(i = 0; i<9; i+=1){
+        query.push('a'+i+' BOOLEAN NOT NULL, ' +
+                   'b'+i+' BOOLEAN NOT NULL, ' +
+                   'c'+i+' BOOLEAN NOT NULL, ' +
+                   'd'+i+' BOOLEAN NOT NULL');
+      }
       tx.executeSql(
         'CREATE TABLE IF NOT EXISTS colormap(' +
           'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
           'entry_id INTEGER NOT NULL,' +
           'color INTEGER NOT NULL,' +
-          'c0 BOOLEAN NOT NULL,' +
-          'c1 BOOLEAN NOT NULL,' +
-          'c2 BOOLEAN NOT NULL,' +
-          'c3 BOOLEAN NOT NULL,' +
-          'c4 BOOLEAN NOT NULL,' +
-          'c5 BOOLEAN NOT NULL,' +
-          'c6 BOOLEAN NOT NULL,' +
-          'c7 BOOLEAN NOT NULL,' +
-          'c8 BOOLEAN NOT NULL ' +
-        ');' +
-        'CREATE UNIQUE INDEX IF NOT EXISTS colormap_idx ON colormap(entry_id, color);'
+          query.join(', ') +
+        ');'
       );
-      */
+      tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS colormap_idx ON colormap(entry_id, color);');
+
     }, [], function(results){
       // transaction success callback
       dfd.resolve(db);
@@ -100,15 +101,83 @@
   /*
     @param tx: transaction object
     @param id: database entry id to update
-    @param F:  feature vector of structure (6-d)
+    @param S) structure feature vector (6-d)
+    @param C: colormap feature vector (9x4=36 dimensions)
     @param callback: optional.
   */
-  $.updatefv = function(tx, id, F, callback){
+  $.updatefv = function(tx, id, S, C){
     tx.executeSql(
       'INSERT OR REPLACE INTO structure (entry_id, s0, s1, s2, s3, s4, s5) values (?,?,?,?,?,?,?);',
-      [id, F[0], F[1], F[2], F[3], F[4], F[5]],
-      callback
+      [id].concat(S)
     );
+    var query = [], i;
+    for(i=0; i<9; i+=1){
+      query.push('a'+i+', b'+i+', c'+i+', d'+i);
+    }
+    console.log('INSERT OR REPLACE INTO colormap (entry_id, ' + query.join(', ') + ') values (?, ' +
+      (new Array(36)).join('?, ') + '?);');
+    /*
+    tx.executeSql(
+      'INSERT OR REPLACE INTO colormap (entry_id, ' + query.join(', ') + ') values (?, ' +
+      Array(36).join('?, ') + '?);',[id].concat(C)
+    );*/
+  };
+
+  // @params S: 6-dimension structure feature vector
+  //
+  $.queryByStructure = function(S){
+    var dfd = $.Deferred();
+    $.initDB.done(function(db){
+      db.readTransaction(function(tx){
+        tx.executeSql(
+          // TODO: join entry table on the outer SELECT!
+          'SELECT entry_id, COUNT(entry_id) FROM (' +
+            'SELECT entry_id FROM structure WHERE s0 = ? UNION ALL' +
+            'SELECT entry_id FROM structure WHERE s1 = ? UNION ALL' +
+            'SELECT entry_id FROM structure WHERE s2 = ? UNION ALL' +
+            'SELECT entry_id FROM structure WHERE s3 = ? UNION ALL' +
+            'SELECT entry_id FROM structure WHERE s4 = ? UNION ALL' +
+            'SELECT entry_id FROM structure WHERE s5 = ?' +
+          ') GROUP BY entry_id ORDER BY 2;',
+          S, // SQL parameters = S, the array of structure features.
+          function(tx, results){
+            dfd.resolve($.getItems(results));
+          }
+        );
+      });
+    });
+    return dfd.promise();
+  };
+
+  $.queryByColormap = function(C){
+    var dfd = $.Deferred(),
+      query = [], // the list of SELECT statements, one per non-transparent area.
+      params = []; // SQL parameters
+    $.each(C, function(idx, qc){
+      // qc: query color.
+      if(qc){
+        var i = Math.floor(idx/4);
+        // i is the area number.
+        query.push('SELECT entry_id FROM colormap WHERE ' +
+                   'a'+i+'=? OR b'+i+'=? OR c'+i+'=? OR d'+i+'=? ');
+        params.push(qc);
+      }
+    })
+    $.initDB.done(function(db){
+      db.readTransaction(function(tx){
+        tx.executeSql(
+          // TODO: join entry table on the outer SELECT!
+          'SELECT entry_id, COUNT(entry_id) FROM (' +
+            query.join('UNION ALL ') +
+          ') GROUP BY entry_id ORDER BY 2;',
+          params, // SQL parameters
+          function(tx, results){
+            dfd.resolve($.getItems(results));
+          }
+        );
+      });
+    });
+    return dfd.promise();
   };
 
 }(window.openDatabase));
