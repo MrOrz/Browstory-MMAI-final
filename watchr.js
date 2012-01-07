@@ -92,10 +92,10 @@
   // Reasonable absolute pixel area is chosen here instead of ratio because
   // coverage ratios will change on different screen resolutions.
   childrenFilter = function($root, $child){
-    return ($child.width() * $child.height() > 100000);
+    return ($child.innerWidth() * $child.innerHeight() > 100000);
   };
   containsContainer = function($root, $child){
-    return ($child.width() >= bodyWidth);
+    return ($child.innerWidth() >= bodyWidth);
   };
   $container = findContainer($body);
   console.log('container: ', $container);
