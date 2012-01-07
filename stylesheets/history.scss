@@ -25,6 +25,14 @@ header{
   h1{
     @include adjust-font-size-to(24px);
   }
+  h2{
+    @include adjust-font-size-to(18px);
+  }
+  #query{ // the canvas
+    border: 1px solid $border-color;
+    background: url(../images/checkerboard.jpg);
+  }
+
 }
 #body{
   background: $bg-color-1;

@@ -11,15 +11,15 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["jquery.min.js", "watchr.js"]
+      "js": ["javascripts/jquery.min.js", "javascripts/watchr.js"]
     }
   ],
   "browser_action": {
-     "default_icon": "history.png",
+     "default_icon": "images/history.png",
      "default_title": "Show link record history!"
    },
   "chrome_url_overrides": {
-    "history": "history.html"
+    "history": "html/history.html"
   },
-  "background_page": "background.html"
+  "background_page": "html/background.html"
 }
