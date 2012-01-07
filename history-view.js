@@ -21,7 +21,8 @@
     //
     $.initDB.done(function(db){
       db.readTransaction(function(tx){
-        tx.executeSql('SELECT * FROM entry;', [], function(tx, results){
+        tx.executeSql('SELECT * FROM entry LEFT JOIN structure ON entry.id=structure.entry_id;', 
+          [], function(tx, results){
           var i, rows = [];
           for (i = 0; i < results.rows.length; i+=1) {
             rows.push(results.rows.item(i));
@@ -42,13 +43,13 @@
       }
       $.initDB.done(function(db){
         db.transaction(function(tx){
-          tx.executeSql('DROP TABLE IF EXISTS entry;', [], function(tx, results){
-            $('body').text('Table dropped, please reload plugin to create table');
-          });
+          tx.executeSql('DROP TABLE IF EXISTS entry;');
+          tx.executeSql('DROP TABLE IF EXISTS structure;');
+          tx.executeSql('DROP TABLE IF EXISTS colormap;');
+        }, null, function(tx, results){
+            $('body').text('All tables dropped, please reload plugin to create table');
         });
-
       });
-
     });
 
     // regenerate feature button
@@ -67,7 +68,7 @@
           $tr = $(this).parents('tr'),
           id = $(this).data('id'),
           canvas = $('<canvas></canvas>').get(0),
-          structure_feature, structure_screenshot,
+          struct_fv, structure_screenshot,
           rect = $(this).data('rect');
 
         canvas.width = img.width; canvas.height = img.height;
@@ -75,18 +76,15 @@
 
         // get new feature from item.screenshot
         //
-        structure_feature = segmentation(canvas, rect);
-        structure_screenshot = structure_feature.canvas.toDataURL();
-        structure_feature = JSON.stringify(structure_feature);
+        struct_fv = segmentation(canvas, rect);
+        structure_screenshot = struct_fv.canvas.toDataURL();
 
         $.initDB.done(function(db){
           db.transaction(function(tx){
-            tx.executeSql('UPDATE entry SET structure_feature = ?, structure_screenshot = ? WHERE id = ?',
-              [
-                structure_feature,
-                structure_screenshot, id
-              ]
+            tx.executeSql('UPDATE entry SET structure_screenshot = ? WHERE id = ?',
+              [structure_screenshot, id]
             );
+            $.updatefv(tx, id, struct_fv);
           },
             function(){ console.error('Update transaction error', arguments);}
           );
@@ -94,7 +92,7 @@
 
         // update table
         $tr.find('.structure-thumb, .structure-orig').attr('src', structure_screenshot);
-        $tr.find('.structure-feature').text(structure_feature);
+        $tr.find('.structure-feature').text(JSON.stringify(struct_fv));
       });
       $('.done').show().delay(1000).fadeOut('slow');
       $(this).removeClass('processing');

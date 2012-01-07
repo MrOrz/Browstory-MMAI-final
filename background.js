@@ -97,19 +97,20 @@
               $.initDB.done(function(db){
                 // process the image
                 //
-                var structure_feature = segmentation(canvas, rect, true),
-                  structure_dataURL = structure_feature.canvas.toDataURL();
-                console.log('structure feature: ', structure_feature);
+                var struct_fv = segmentation(canvas, rect, true),
+                  structure_dataURL = struct_fv.canvas.toDataURL();
+                console.log('structure feature: ', struct_fv);
                 // save the image into database
                 db.transaction(function(tx){
                   tx.executeSql(
-                    'UPDATE entry SET screenshot=?, structure_feature=?, structure_screenshot=?, ' +
+                    'UPDATE entry SET screenshot=?, structure_screenshot=?, ' +
                     'rect=? WHERE id=?;',
-                    [dataURL, JSON.stringify(structure_feature), structure_dataURL,
-                    JSON.stringify(rect), dbIdOf(windowId, tabId)]);
+                    [dataURL, structure_dataURL, JSON.stringify(rect), dbIdOf(windowId, tabId)]);
+
+                  $.updatefv(tx, dbIdOf(windowId, tabId), struct_fv);
+
                 }, txErr);
                 console.info('... screenshot taken.');
-
               });
 
             }
@@ -160,7 +161,7 @@
                   tx.executeSql('UPDATE entry SET active = ?, lastview = ? WHERE id = ?;',
                     [active + activeTime, lastViewed, dbId],
                     function(tx, results){
-                      console.log('UPDATE result', results, 'active time becomes ', active + activeTime, 
+                      console.log('UPDATE result', results, 'active time becomes ', active + activeTime,
                         ', last viewed: ', lastViewed);
                     }, txErr
                   );
