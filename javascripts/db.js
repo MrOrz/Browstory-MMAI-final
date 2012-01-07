@@ -130,20 +130,22 @@
     $.initDB.done(function(db){
       db.readTransaction(function(tx){
         tx.executeSql(
-          // TODO: join entry table on the outer SELECT!
-          'SELECT entry_id, COUNT(entry_id) FROM (' +
-            'SELECT entry_id FROM structure WHERE s0 = ? UNION ALL' +
-            'SELECT entry_id FROM structure WHERE s1 = ? UNION ALL' +
-            'SELECT entry_id FROM structure WHERE s2 = ? UNION ALL' +
-            'SELECT entry_id FROM structure WHERE s3 = ? UNION ALL' +
-            'SELECT entry_id FROM structure WHERE s4 = ? UNION ALL' +
+          'SELECT COUNT(entry_id) AS sim, entry.* FROM (' +
+            'SELECT entry_id FROM structure WHERE s0 = ? UNION ALL ' +
+            'SELECT entry_id FROM structure WHERE s1 = ? UNION ALL ' +
+            'SELECT entry_id FROM structure WHERE s2 = ? UNION ALL ' +
+            'SELECT entry_id FROM structure WHERE s3 = ? UNION ALL ' +
+            'SELECT entry_id FROM structure WHERE s4 = ? UNION ALL ' +
             'SELECT entry_id FROM structure WHERE s5 = ?' +
-          ') GROUP BY entry_id ORDER BY 2;',
+          ') LEFT JOIN entry ON entry_id = entry.id' +
+          ' GROUP BY entry_id ORDER BY sim DESC;',
           S, // SQL parameters = S, the array of structure features.
           function(tx, results){
             dfd.resolve($.getItems(results));
           }
         );
+      }, function(){
+        console.error('query error', arguments);
       });
     });
     return dfd.promise();
@@ -167,9 +169,9 @@
       db.readTransaction(function(tx){
         tx.executeSql(
           // TODO: join entry table on the outer SELECT!
-          'SELECT entry_id, COUNT(entry_id) FROM (' +
+          'SELECT entry_id, COUNT(entry_id) AS sim FROM (' +
             query.join('UNION ALL ') +
-          ') GROUP BY entry_id ORDER BY 2;',
+          ') GROUP BY entry_id ORDER BY sim DESC;',
           params, // SQL parameters
           function(tx, results){
             dfd.resolve($.getItems(results));
