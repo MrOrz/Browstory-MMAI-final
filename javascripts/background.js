@@ -237,7 +237,7 @@
 
   // add button click listener
   chrome.browserAction.onClicked.addListener(function(tab) {
-    var history_url = chrome.extension.getURL('history-view.html');
+    var history_url = chrome.extension.getURL('html/history-view.html');
     chrome.tabs.create({url: history_url});
   });
 
