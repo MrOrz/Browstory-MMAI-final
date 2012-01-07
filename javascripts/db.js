@@ -87,6 +87,16 @@
     return dfd.promise();
   }());
 
+  // utility function that returns query results as javascript array.
+  //
+  $.getItems = function(results){
+    var i, items = [];
+    for (i = 0; i < results.rows.length; i+=1) {
+      items.push(results.rows.item(i));
+    }
+    return items;
+  }
+
   /*
     @param tx: transaction object
     @param id: database entry id to update

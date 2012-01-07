@@ -8,14 +8,7 @@ $(function(){
     $recent_target = $('#recent-target'),
     $search_target = $('#search-target'),
     $empty = $tmpl.tmpl({}),
-    itemCount, // counting how many items in a row
-    getItems = function(results){
-      var i, items = [];
-      for (i = 0; i < results.rows.length; i+=1) {
-        items.push(results.rows.item(i));
-      }
-      return items;
-    }
+    itemCount; // counting how many items in a row
 
   // testing item width
   //
@@ -29,7 +22,7 @@ $(function(){
 
       tx.executeSql('SELECT * FROM entry ORDER BY lastview DESC LIMIT ?;',
       [itemCount], function(tx, results){
-        $tmpl.tmpl(getItems(results)).appendTo($recent_target);
+        $tmpl.tmpl($.getItems(results)).appendTo($recent_target);
       }, function(){
         console.error('Read Transaction Error', arguments);
       });
@@ -52,7 +45,7 @@ $(function(){
             console.log('SELECT * FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;');
             tx.executeSql('SELECT * FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;', 
             [], function(tx, results){
-              $search_target.empty().append($tmpl.tmpl(getItems(results)));
+              $search_target.empty().append($tmpl.tmpl($.getItems(results)));
             });
           },function(){
             console.error('read transaction error on search', arguments);
