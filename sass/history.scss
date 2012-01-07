@@ -31,6 +31,7 @@ header{
   #query{ // the canvas
     border: 1px solid $border-color;
     background: url(../images/checkerboard.jpg);
+    box-shadow: inset 0px 2px 4px rgba(#000, .5), 0 2px 1px rgba(#fff, .9);
   }
 
 }

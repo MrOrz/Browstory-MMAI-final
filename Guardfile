@@ -5,10 +5,10 @@
 # see https://github.com/psionides/jslint_on_rails
 guard 'jshint-on-rails', :config_path => 'jslint.yml' do
   # watch for changes to application javascript files
-  watch(%r{^/javascripts/.*\.js$})
+  watch(%r{^javascripts/.*\.js$})
 end
 
 guard 'compass', :configuration_file => './compass-config.rb' do
-  watch(%r{css/.+\.scss})
+  watch(%r{sass/.+\.scss})
 end
 
