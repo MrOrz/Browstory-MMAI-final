@@ -1,3 +1,4 @@
+/*global chrome */
 /* history.js for history.html */
 
 $(function(){
@@ -5,8 +6,16 @@ $(function(){
   var
     $tmpl = $('#itemTemplate'),
     $recent_target = $('#recent-target'),
+    $search_target = $('#search-target'),
     $empty = $tmpl.tmpl({}),
-    itemCount; // counting how many items in a row
+    itemCount, // counting how many items in a row
+    getItems = function(results){
+      var i, items = [];
+      for (i = 0; i < results.rows.length; i+=1) {
+        items.push(results.rows.item(i));
+      }
+      return items;
+    }
 
   // testing item width
   //
@@ -20,14 +29,36 @@ $(function(){
 
       tx.executeSql('SELECT * FROM entry ORDER BY lastview DESC LIMIT ?;',
       [itemCount], function(tx, results){
-        var i, htmlStr = "", items = [];
-        for (i = 0; i < results.rows.length; i+=1) {
-          items.push(results.rows.item(i));
-        }
-        $tmpl.tmpl(items).appendTo($recent_target);
+        $tmpl.tmpl(getItems(results)).appendTo($recent_target);
       }, function(){
         console.error('Read Transaction Error', arguments);
       });
     });
   });
+
+  $('form').submit(function(e){e.preventDefault(); return; })
+
+  var searchDfd = $.Deferred(), search_handler;
+  $('.keyword').keydown(function(){
+    if(search_handler){
+      clearTimeout(search_handler);
+    }
+    var $this = $(this);
+    search_handler = setTimeout(function(){
+      chrome.history.search({text: $this.val()}, function(results){
+        var urls = $.map(results, function(hisItem){return '"' + hisItem.url + '"'}).join(',');
+        $.initDB.done(function(db){
+          db.readTransaction(function(tx, results){
+            console.log('SELECT * FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;');
+            tx.executeSql('SELECT * FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;', 
+            [], function(tx, results){
+              $search_target.empty().append($tmpl.tmpl(getItems(results)));
+            });
+          },function(){
+            console.error('read transaction error on search', arguments);
+          });
+        });
+      });
+    }, 200);
+  })
 });
