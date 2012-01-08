@@ -132,10 +132,12 @@
 
   console.log('container[]:', containers);
 
-  // send sendRequest on window.onload
-  // so that almost all images are received
+  // Send sendRequest on window.onload,
+  // right after all images are received.
   //
-  $(window).load(function(){
+  console.log('doucumnet.readyState:', document.readyState);
+  var sendRequest = function(){
+    console.log('window loaded.');
     // update top information using document.body.scrollTop
     $.each(containers, function(idx){
       containers[idx].top -= document.body.scrollTop;
@@ -147,5 +149,11 @@
       title: document.title,
       container:containers
     }, function(resp){console.log(resp)});
-  });
+  };
+  if(document.readyState !== 'complete'){
+    $(window).load(sendRequest);
+  }else{
+    // if document is already complete, invoke sendRequest directly.
+    sendRequest();
+  }
 }(window, document));
