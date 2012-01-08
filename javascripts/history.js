@@ -47,7 +47,8 @@ $(function(){
   $empty.appendTo($('#hidden'));
   measure();
 
-  // show recent
+  // init show recent
+  //
   $.initDB.done(function(db){
     db.readTransaction(function(tx){
       // clean up target
@@ -66,8 +67,12 @@ $(function(){
     });
   });
 
+  // prevent form submission
+  //
   $('form').submit(function(e){e.preventDefault(); return; })
 
+  // search handler
+  //
   var searchDfd = $.Deferred(), search_handler;
   $('.keyword').keydown(function(){
     if(search_handler){
@@ -91,6 +96,9 @@ $(function(){
       });
     }, 200);
   });
+
+  // window resize handler
+  //
   $(window).resize(function(){
     // recalculate *counts and render the elements again
     measure();
