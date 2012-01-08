@@ -66,6 +66,7 @@ var util = (function (){
 		return sum;
 	}
 	function ColorF(img){
+		if(img[Math.floor(img.length/4/2)*4+3]==0) return [null,null,null,null];
 		var hist = histHSV(img), i, max=-1, second=-1,
 			maxindex = new Array(1), C = new Array(3);
 		// Find dominant colors

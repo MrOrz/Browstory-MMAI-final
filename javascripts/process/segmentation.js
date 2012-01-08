@@ -2,12 +2,18 @@
 
 function segmentation(img, rect, debug){
 	"use strict";
-
+	var width = img.width, height = img.height,
+	    colorimg = Pixastic.process(img, "crop", { // original img
+			rect : {
+				left : 0, top : 0, width : width, height : height
+			}
+		});
+		
 	// coloring context
 	var ctx = img.getContext('2d'),
 			colors = ['#ff0000', '#00ff00'],
 			i,
-			cropimage;
+			cropimage, cropimage2;
 	for(i=0; i<rect.length; ++i){
 		ctx.fillStyle = colors[i];
 		ctx.fillRect(rect[i].left, rect[i].top,
@@ -17,8 +23,8 @@ function segmentation(img, rect, debug){
 	// start segmentation
 	var hor = new Array(3),
 		ver = new Array(3),
-		j,k,cut,maxcut,maxdiff,diff,
-		width = img.width, height = img.height;
+		j,k,cut,maxcut,maxdiff,diff;
+		
 	hor[0] = ver[0] = hor[3] = ver[3] = 0;
 	for(i=1; i<=7; i+=2)
 	{
@@ -66,35 +72,6 @@ function segmentation(img, rect, debug){
 		}
 	}
 
-	// Similarity test among nine blocks
-	var adj = new Array(8),
-			L = new Array(8),
-			C = new Array(8),
-			thr = 0.002;
-
-	adj[0] = [1,3];
-	adj[1] = [4];
-	adj[2] = [1,5];
-	adj[3] = [4];
-	adj[4] = [7];
-	adj[5] = [4];
-	adj[6] = [3,7];
-	adj[7] = [8];
-	adj[8] = [5];
-	cropimage = new Array(8);
-
-	for(i=0; i<=8; i++)
-	{
-		L[i]=i;
-		cropimage[i] = img.getContext('2d').getImageData(
-			Math.floor(width/3) * (i%3) + (i%3===1?-1:1) * ver[i%3],
-			Math.floor(height/3) * Math.floor(i/3) + (Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)],
-			Math.ceil(width/3)-(i%3===1?-1:1)*ver[i%3]-(i%3===1?-1:1)*ver[i%3+1],
-			Math.ceil(height/3)-(Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)] - 
-				(Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)+1]
-		);
-		C[i] = util.ColorF(cropimage[i].data);
-	}
 	var canvas = Pixastic.process(img, "crop", {
 			rect : {
 				left : 0, top : 0, width : width, height : height
@@ -106,12 +83,51 @@ function segmentation(img, rect, debug){
 	ctx.fillRect(0,Math.floor(height/3)*2+hor[2],width,2);
 	ctx.fillRect(Math.floor(width/3)-ver[1],0,2,height);
 	ctx.fillRect(Math.floor(width/3)*2+ver[2],0,2,height);
+	
+	// Similarity test among nine blocks
+	var adj = new Array(8),
+		L = new Array(8),
+		C = new Array(8),
+		thr = 0.002;
+
+	adj[0] = [1,3];
+	adj[1] = [4];
+	adj[2] = [1,5];
+	adj[3] = [4];
+	adj[4] = [7];
+	adj[5] = [4];
+	adj[6] = [3,7];
+	adj[7] = [8];
+	adj[8] = [5];
+	cropimage = new Array(8);
+	cropimage2 = new Array(8);
+
+	for(i=0; i<=8; i++)
+	{
+		L[i]=i;
+		cropimage[i] = colorimg.getContext('2d').getImageData(
+			Math.floor(width/3) * (i%3) + (i%3===1?-1:1) * ver[i%3],
+			Math.floor(height/3) * Math.floor(i/3) + (Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)],
+			Math.ceil(width/3)-(i%3===1?-1:1)*ver[i%3]-(i%3===1?-1:1)*ver[i%3+1],
+			Math.ceil(height/3)-(Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)] - 
+				(Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)+1]
+		);
+		cropimage2[i] = img.getContext('2d').getImageData(
+			Math.floor(width/3) * (i%3) + (i%3===1?-1:1) * ver[i%3],
+			Math.floor(height/3) * Math.floor(i/3) + (Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)],
+			Math.ceil(width/3)-(i%3===1?-1:1)*ver[i%3]-(i%3===1?-1:1)*ver[i%3+1],
+			Math.ceil(height/3)-(Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)] - 
+				(Math.floor(i/3)===1?-1:1)*hor[Math.floor(i/3)+1]
+		);
+		C[i] = util.ColorF(cropimage[i].data);
+	}
+
 	for(i=0; i<=8; i++) //cluster among adjacent blocks
 	{
-		if(cropimage[i].height<height/24){
+		if(cropimage[i].height<height/20){
 			L[i]=L[3+i%3]=Math.min(L[i],L[3+i%3]);
 		}
-		else if(cropimage[i].width<width/24){
+		else if(cropimage[i].width<width/20){
 			L[i]=L[Math.floor(i/3)*3+1]=Math.min(L[i],L[Math.floor(i/3)*3+1]);
 		}
 		else
@@ -119,7 +135,7 @@ function segmentation(img, rect, debug){
 			maxdiff = -1;
 			for(j=0; j<adj[i].length; j++)
 			{
-				diff = util.distance(cropimage[i].data,cropimage[adj[i][j]].data);
+				diff = util.distance(cropimage2[i].data,cropimage2[adj[i][j]].data);
 				//console.log('diff('+i+','+adj[i][j]+')='+diff);
 				if(diff<maxdiff||maxdiff===-1)
 				{
