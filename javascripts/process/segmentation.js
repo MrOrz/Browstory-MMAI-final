@@ -73,11 +73,13 @@ function segmentation(img, rect, debug){
 		adj[8] = [5];
 	var cropimage = new Array(8),
 		L = new Array(8),
+		C = new Array(8),
 		thr = 0.002;
 	for(i=0; i<=8; i++)
 	{
 		L[i]=i;
 		cropimage[i] = img.getContext('2d').getImageData(Math.floor(width/3)*(i%3)+(i%3==1?-1:1)*ver[i%3], Math.floor(height/3)*Math.floor(i/3)+(Math.floor(i/3)==1?-1:1)*hor[Math.floor(i/3)], Math.ceil(width/3)-(i%3==1?-1:1)*ver[i%3]-(i%3==1?-1:1)*ver[i%3+1], Math.ceil(height/3)-(Math.floor(i/3)==1?-1:1)*hor[Math.floor(i/3)]-(Math.floor(i/3)==1?-1:1)*hor[Math.floor(i/3)+1]);
+		C[i] = ColorF(cropimage[i].data);
 	}
 	var canvas = Pixastic.process(img, "crop", {
 			rect : {

@@ -10,6 +10,44 @@ function distance(img1,img2){
 	return sum;
 }
 
+function ColorF(img){
+	var hist = histHSV(img), i, max=-1, second=-1,
+		maxindex = new array(1), C = new array(3);
+	// Find dominant colors
+	for(i=0; i<hist.length; i++)
+	{
+		if(hist[i]>max)
+		{
+			second=max;
+			maxindex[1]=maxindex[0];
+			max=hist[i];
+			maxindex[0]=i;
+		}
+		else if(hist[i]>second)
+		{
+			second=hist[i];
+			maxindex[1]=i;
+		}
+	}
+	
+	// Quantization
+	for(i=0; i<2; i++)
+	{
+		if(maxindex[i]<162)
+		{
+			var H = Math.floor(maxindex[i]/9);
+			C[2*i] = Math.floor(H/45)*45+22.5;
+			C[2*i+1] = H<22.5?360:Math.ceil((H-22.5)/45)*45;
+		}
+		else
+		{
+			var S = maxindex[i]-162;
+			C[2*i] = C[2*i+1] = -S;
+		}
+	}
+	return C;
+}
+
 function RGB2HSV(R,G,B){// RGB to HSV
     var r=R/255, g=G/255, b=B/255, H, S, V;
     var minRGB = Math.min(r,g,b),
