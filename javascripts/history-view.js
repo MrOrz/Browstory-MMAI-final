@@ -11,6 +11,20 @@
     $table,
     getTime = function(timestamp){
       return "" + new Date(timestamp);
+    },
+    colorize = function(){ // colorize all color maps
+      $('.colormap').find('span').each(function(){
+        var color = parseFloat($(this).text(), 10);
+        if(color < 0){
+          // -1, -2, -3
+          $(this).css('background', 'hsl(0,0%,' + (-50*(color+1)) + '%)');
+          if(color === -1){ // make font white if background is black
+            $(this).css('color', '#fff');
+          }
+        }else{
+          $(this).css('background', 'hsl('+(color)+', 100%, 50%)');
+        }
+      });
     };
 
   // init script
@@ -21,14 +35,18 @@
     //
     $.initDB.done(function(db){
       db.readTransaction(function(tx){
-        tx.executeSql('SELECT * FROM entry LEFT JOIN structure ON entry.id=structure.entry_id;', 
+        tx.executeSql(
+          'SELECT * FROM entry '+
+          'LEFT JOIN structure ON entry.id=structure.entry_id '+
+          'LEFT JOIN colormap ON entry.id=colormap.entry_id;',
+
           [], function(tx, results){
           var i, rows = [];
           for (i = 0; i < results.rows.length; i+=1) {
             rows.push(results.rows.item(i));
           }
           $('#rowTemplate').tmpl(rows, {getTime:getTime}).appendTo($('#tbody'));
-          //$table.append(htmlStr);
+          colorize();
         }, function(){
           console.error('Read Transaction Error', arguments);
         });
@@ -42,13 +60,17 @@
         return false;
       }
       $.initDB.done(function(db){
-        db.transaction(function(tx){
-          tx.executeSql('DROP TABLE IF EXISTS entry;');
-          tx.executeSql('DROP TABLE IF EXISTS structure;');
-          tx.executeSql('DROP TABLE IF EXISTS colormap;');
-        }, null, function(tx, results){
+        db.transaction(
+          function(tx){
+            tx.executeSql('DROP TABLE IF EXISTS entry;');
+            tx.executeSql('DROP TABLE IF EXISTS structure;');
+            tx.executeSql('DROP TABLE IF EXISTS colormap;');
+          }, function(err){
+            console.error('DROP TABLE error', err);
+          }, function(tx, results){
             $('body').text('All tables dropped, please reload plugin to create table');
-        });
+          }
+        );
       });
     });
 
@@ -92,8 +114,18 @@
 
         // update table
         $tr.find('.structure-thumb, .structure-orig').attr('src', structure_screenshot);
-        $tr.find('.structure-feature').text(JSON.stringify(result.structure));
-      });
+        $tr.find('.struct-fv').text(JSON.stringify(result.structure));
+
+        var colorRow = {}, i;
+        for(i=0; i<result.colormap.length; i+=4){
+          colorRow['a'+i/4] = result.colormap[i];
+          colorRow['b'+i/4] = result.colormap[i+1];
+          colorRow['c'+i/4] = result.colormap[i+2];
+          colorRow['d'+i/4] = result.colormap[i+3];
+        }
+          $tr.find('.colormap').empty().append($('#colormapTemplate').tmpl([colorRow]));
+      }); // end of each '.ss-orig'
+      colorize();
       $('.done').show().delay(1000).fadeOut('slow');
       $(this).removeClass('processing');
     });

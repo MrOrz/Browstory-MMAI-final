@@ -38,6 +38,15 @@
       color: green;
       display: none;
     }
+    .colormap span{
+      font-size: 8px;
+    }
+    .colormap table{
+      border-collapse: collapse;
+    }
+    .colormap table td{
+      border: 1px solid #ccc;
+    }
   </style>
 
 </head>
@@ -49,6 +58,7 @@
         <th>id</th>
         <th>screenshot</th>
         <th>structure</th>
+        <th>color</th>
         <th>url</th>
         <th>time</th>
         <th>lastview</th>
@@ -75,11 +85,33 @@
           [${s0},${s1},${s2},${s3},${s4},${s5}]
         </span>
       </td>
-      <td>${url}</td>
+      <td class="colormap">
+        {{tmpl "#colormapTemplate"}}
+      </td>
+      <td><a href="${url}" target="_blank">${url}</a></td>
       <td>${$item.getTime(timestamp)}</td>
       <td>${$item.getTime(lastview)}</td>
       <td>${active}</td>
    </tr>
+  </script>
+  <script id="colormapTemplate" type="text/x-jquery-tmpl">
+    <table>
+      <tr>
+        <td> <span>${a0}</span> <span>${b0}</span> <span>${c0}</span> <span>${d0}</span> </td>
+        <td> <span>${a1}</span> <span>${b1}</span> <span>${c1}</span> <span>${d1}</span> </td>
+        <td> <span>${a2}</span> <span>${b2}</span> <span>${c2}</span> <span>${d2}</span> </td>
+      </tr>
+      <tr>
+        <td> <span>${a3}</span> <span>${b3}</span> <span>${c3}</span> <span>${d3}</span> </td>
+        <td> <span>${a4}</span> <span>${b4}</span> <span>${c4}</span> <span>${d4}</span> </td>
+        <td> <span>${a5}</span> <span>${b5}</span> <span>${c5}</span> <span>${d5}</span> </td>
+      </tr>
+      <tr>
+        <td> <span>${a6}</span> <span>${b6}</span> <span>${c6}</span> <span>${d6}</span> </td>
+        <td> <span>${a7}</span> <span>${b7}</span> <span>${c7}</span> <span>${d7}</span> </td>
+        <td> <span>${a8}</span> <span>${b8}</span> <span>${c8}</span> <span>${d8}</span> </td>
+      </tr>
+    </table>
   </script>
 </body>
 </html>
