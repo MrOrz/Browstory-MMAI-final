@@ -8,6 +8,7 @@ $(function(){
     $recentTarget = $('#recent-target'),
     $searchTarget = $('#search-target'),
     $empty = $tmpl.tmpl({}),
+    canvas = $('#query').get(0),
     recentItems, searchResults, // caches items for redraw
     itemCount, // counting how many items in a row
     largeCount, smallCount, tinyCount,
@@ -113,96 +114,25 @@ $(function(){
     insertBr($recentTarget);
   });
 
-  // setting canvas
-  // http://www.williammalone.com/articles/create-html5-canvas-javascript-drawing-app/
-  //
-  var painting = false,
-      canvas = $('#query').get(0),
-      canvas2 = $('#filled').get(0),
-      ctx = canvas.getContext('2d');
+  // canvas draw complete event handler
+  $(canvas).on('draw', function(rect){
+    var tmpCanvas = $('<canvas>').get(0);
+    tmpCanvas.width = canvas.width; tmpCanvas.height = canvas.height;
+    tmpCanvas.getContext('2d').putImageData(
+      canvas.getContext('2d').getImageData(0, 0,canvas.width, canvas.height),0,0
+    );
 
-  ctx.lineJoin = "round"; ctx.lineWidth = 3;
-  $(canvas).mousedown(function(e){
-    painting = true;
-    ctx.beginPath();
-    ctx.moveTo(e.pageX - this.offsetLeft, e.pageY - this.offsetTop - document.body.scrollTop);
-  }).mousemove(function(e){
-    if(painting){
-      ctx.lineTo(e.pageX - this.offsetLeft, e.pageY - this.offsetTop - document.body.scrollTop);
-      ctx.stroke();
-    }
-  }).on('mouseup mouseleave', function(){
-    if(painting){
-      painting = false;
-      ctx.closePath();
+    var result = segmentation(tmpCanvas, []);
+    $(result.canvas).insertAfter($(canvas));
 
-      // start searching
-      //
-      var ctx2 = canvas2.getContext('2d'),
-          w = canvas2.width, h = canvas2.height,
-          imageData,
-          r, c,
-          fillPixel = [0,0,0,255,0,255,255,0,255],
-          bfsQueue = [],
-          bfs = function(){
-            var filled = false;
-            while(bfsQueue.length > 0){
-              // console.log('bfs:', bfsQueue[0].r, bfsQueue[0].c);
-              var coord = bfsQueue.shift();
-              // if current step not transparent, return.
-              if(imageData.data[coord.r*4*w+coord.c*4+3] !== 0){
-                continue;
-              }
-
-              // push surrounding pixels into queue
-              if(coord.r-1 >= 0){bfsQueue.push({r: coord.r-1, c: coord.c});}
-              if(coord.r+1 < h){bfsQueue.push({r: coord.r+1, c: coord.c});}
-              if(coord.c-1 >= 0){bfsQueue.push({r: coord.r, c: coord.c-1});}
-              if(coord.c+1 < w){bfsQueue.push({r: coord.r, c: coord.c+1});}
-
-              // draw current pixel
-              for(var i=0; i<3; ++i){
-                imageData.data[coord.r*4*w+coord.c*4+i] = fillPixel[i];
-              }
-              filled = true;
-              imageData.data[coord.r*4*w+coord.c*4+3] = 255;
-            }
-            return filled;
-          };
-
-      ctx2.clearRect(0,0,w,h);
-      ctx2.drawImage(canvas, 0, 0);
-      imageData = ctx2.getImageData(0, 0, w, h);
-      for(r=0; r<h; r+=1){
-        for(c=0; c<w; c+=1){
-          bfsQueue.push({r:r, c:c});
-          if(bfs()){ // some pixels filled
-
-            // cycle the color
-            var leftmost = fillPixel.shift();
-            fillPixel.push(leftmost);
-          }
-        }
-      }
-      // refresh ctx2
-      ctx2.putImageData(imageData, 0, 0);
-
-      var tmpCanvas = $('<canvas>').get(0);
-      tmpCanvas.width = w; tmpCanvas.height = h;
-      tmpCanvas.getContext('2d').putImageData(imageData,0,0);
-      var result = segmentation(tmpCanvas, []);
-      $(result.canvas).insertAfter(canvas2);
-
-      // query using structure
-      $.queryByStructure(result.structure).done(function(items){
-        console.log('structure query result:', items);
-        $searchTarget.empty().append($tmpl.tmpl(items));
-      });
-    }
+    $.queryByStructure(result.structure).done(function(items){
+      console.log('structure query result:', items);
+      $searchTarget.empty().append($tmpl.tmpl(items));
+    })
 
   });
 
   $('.clear-query').click(function(){
-    ctx.clearRect(0,0,canvas.width, canvas.height);
+    canvas.getContext('2d').clearRect(0,0,canvas.width, canvas.height);
   })
 });
