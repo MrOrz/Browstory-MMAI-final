@@ -84,15 +84,15 @@ var util = (function (){
 				maxindex[1]=i;
 			}
 		}
-
+		if(second==-1||second==0) maxindex[1] = maxindex[0];
 		// Quantization
 		for(i=0; i<2; i++)
 		{
 			if(maxindex[i]<162)
 			{
 				var H = Math.floor(maxindex[i]/9);
-				C[2*i] = Math.floor(H/45)*45+22.5;
-				C[2*i+1] = H<22.5?360:Math.ceil((H-22.5)/45)*45;
+				C[2*i] = Math.floor(H*20/45)*45+22.5;
+				C[2*i+1] = (H*20)<22.5?360:Math.ceil((H*20-22.5)/45)*45;
 			}
 			else
 			{
