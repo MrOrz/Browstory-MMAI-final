@@ -7,6 +7,10 @@
   <script type="text/javascript" src="../javascripts/jquery.min.js"></script>
   <script type="text/javascript" src="../javascripts/jquery.tmpl.js"></script>
   <script type="text/javascript" src="../javascripts/db.js"></script>
+  <script type="text/javascript" src="../javascripts/process/pixastic/pixastic.core.js"></script>
+  <script type="text/javascript" src="../javascripts/process/pixastic/actions/crop.js"></script>
+  <script type="text/javascript" src="../javascripts/process/util.js"></script>
+  <script type="text/javascript" src="../javascripts/process/segmentation.js"></script>
   <script type="text/javascript" src="../javascripts/history.js"></script>
 </head>
 <body>
@@ -17,14 +21,15 @@
     </form>
     <h2>Sketch</h2>
       <canvas id="query" width="180" height="120"></canvas>
-
+      <button type="button" class="clear-query">Clear</button>
+      <canvas id="filled" width="180" height="120"></canvas>
   </header>
   <div id="body">
-    <section>
+    <section class="recent-tab">
       <h1>Recently Viewed</h1>
       <div id="recent-target"></div>
     </section>
-    <section>
+    <section class="search-tab">
       <h1>Search Results</h1>
       <div id="search-target"></div>
     </section>

@@ -48,6 +48,9 @@ header{
     color: $main-color-1;
   }
 }
+.recent-tab{
+  display: none;
+}
 #hidden{
   overflow: hidden;
   height: 0;
@@ -67,6 +70,7 @@ header{
   .thumb{
     width: 100%;
     border: 1px solid $border-color;
+    border-radius: 2px;
   }
   &:hover .thumb{
     box-shadow: 0 2px 5px #aaa;
