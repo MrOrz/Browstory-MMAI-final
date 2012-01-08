@@ -70,11 +70,10 @@
         'CREATE TABLE IF NOT EXISTS colormap(' +
           'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
           'entry_id INTEGER NOT NULL,' +
-          'color INTEGER NOT NULL,' +
           query.join(', ') +
         ');'
       );
-      tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS colormap_idx ON colormap(entry_id, color);');
+      tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS colormap_idx ON colormap(entry_id);');
 
     }, [], function(results){
       // transaction success callback
