@@ -97,9 +97,8 @@
               $.initDB.done(function(db){
                 // process the image
                 //
-                var struct_fv = segmentation(canvas, rect, true),
-                  structure_dataURL = struct_fv.canvas.toDataURL();
-                console.log('structure feature: ', struct_fv);
+                var result = segmentation(canvas, rect, true),
+                  structure_dataURL = result.canvas.toDataURL();
                 // save the image into database
                 db.transaction(function(tx){
                   tx.executeSql(
@@ -107,7 +106,7 @@
                     'rect=? WHERE id=?;',
                     [dataURL, structure_dataURL, JSON.stringify(rect), dbIdOf(windowId, tabId)]);
 
-                  $.updatefv(tx, dbIdOf(windowId, tabId), struct_fv);
+                  $.updatefv(tx, dbIdOf(windowId, tabId), result.structure, result.colormap);
 
                 }, txErr);
                 console.info('... screenshot taken.');

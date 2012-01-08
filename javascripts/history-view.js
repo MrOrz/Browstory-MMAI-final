@@ -68,7 +68,7 @@
           $tr = $(this).parents('tr'),
           id = $(this).data('id'),
           canvas = $('<canvas></canvas>').get(0),
-          struct_fv, structure_screenshot,
+          result, structure_screenshot,
           rect = $(this).data('rect');
 
         canvas.width = img.width; canvas.height = img.height;
@@ -76,15 +76,15 @@
 
         // get new feature from item.screenshot
         //
-        struct_fv = segmentation(canvas, rect);
-        structure_screenshot = struct_fv.canvas.toDataURL();
+        result = segmentation(canvas, rect);
+        structure_screenshot = result.canvas.toDataURL();
 
         $.initDB.done(function(db){
           db.transaction(function(tx){
             tx.executeSql('UPDATE entry SET structure_screenshot = ? WHERE id = ?',
               [structure_screenshot, id]
             );
-            $.updatefv(tx, id, struct_fv);
+            $.updatefv(tx, id, result.structure, result.colormap);
           },
             function(){ console.error('Update transaction error', arguments);}
           );
@@ -92,7 +92,7 @@
 
         // update table
         $tr.find('.structure-thumb, .structure-orig').attr('src', structure_screenshot);
-        $tr.find('.structure-feature').text(JSON.stringify(struct_fv));
+        $tr.find('.structure-feature').text(JSON.stringify(result.structure));
       });
       $('.done').show().delay(1000).fadeOut('slow');
       $(this).removeClass('processing');

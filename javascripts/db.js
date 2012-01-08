@@ -113,13 +113,10 @@
     for(i=0; i<9; i+=1){
       query.push('a'+i+', b'+i+', c'+i+', d'+i);
     }
-    console.log('INSERT OR REPLACE INTO colormap (entry_id, ' + query.join(', ') + ') values (?, ' +
-      (new Array(36)).join('?, ') + '?);');
-    /*
     tx.executeSql(
       'INSERT OR REPLACE INTO colormap (entry_id, ' + query.join(', ') + ') values (?, ' +
-      Array(36).join('?, ') + '?);',[id].concat(C)
-    );*/
+      (new Array(36)).join('?, ') + '?);',[id].concat(C)
+    );
   };
 
   // @params S: 6-dimension structure feature vector
