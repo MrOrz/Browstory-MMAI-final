@@ -115,14 +115,14 @@ $(function(){
   });
 
   // canvas draw complete event handler
-  $(canvas).on('draw', function(rect){
+  $(canvas).on('draw', function(e, rect){
     var tmpCanvas = $('<canvas>').get(0);
     tmpCanvas.width = canvas.width; tmpCanvas.height = canvas.height;
     tmpCanvas.getContext('2d').putImageData(
       canvas.getContext('2d').getImageData(0, 0,canvas.width, canvas.height),0,0
     );
 
-    var result = segmentation(tmpCanvas, []);
+    var result = segmentation(tmpCanvas, rect);
     $(result.canvas).insertAfter($(canvas));
 
     $.queryByStructure(result.structure).done(function(items){

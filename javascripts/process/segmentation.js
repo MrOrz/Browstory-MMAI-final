@@ -11,7 +11,7 @@ function segmentation(img, rect, debug){
 
 	// coloring context
 	var ctx = img.getContext('2d'),
-			colors = ['#ff0000', '#00ff00'],
+			colors = ['#ff0000', '#00ff00', '#0000ff', '#00ffff', '#ff00ff', '#ffff00'],
 			i,
 			cropimage, cropimage2;
 	for(i=0; i<rect.length; ++i){
