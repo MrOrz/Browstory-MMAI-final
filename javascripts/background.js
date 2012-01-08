@@ -190,7 +190,7 @@
 
       // Wait for both screenshot and initDB to complete
       // before inserting the record into database.
-      $.when($.initDB).done(function(db){
+      $.initDB.done(function(db){
         db.transaction(function(tx){
           tx.executeSql('SELECT id, visits FROM entry WHERE url = ?',
             [sender.tab.url], function(tx, results){

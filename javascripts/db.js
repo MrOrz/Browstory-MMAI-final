@@ -9,11 +9,12 @@
   var
     // constants
     DB_VERSION = "0.1",
-    DB_SIZE = 50 * 1024 * 1024; // 10MB database
+    DB_SIZE = 50 * 1024 * 1024, // 10MB database
+    initialized = false;
 
   // The variable db must be guarded because even though openDatabase() method
   // is synchronous, its database creation callback is not.
-  // If the table 'entry' is not created before it is selected, errors would
+  // If the table is not created before it is selected, errors would
   // occur.
   //
   // reference: http://goo.gl/QAIUE
@@ -23,67 +24,71 @@
     var
       dfd = $.Deferred(),
       db = openDatabase('link-recording', DB_VERSION, 'link recording', DB_SIZE);
+    if(!initialized){
+      console.log('database init');
+      db.transaction(
+        function(tx){ // transaction callback
+          tx.executeSql(
+            'CREATE TABLE IF NOT EXISTS entry(' +
+              'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
+              'url TEXT NOT NULL,' +
+              'title TEXT,' +
+              'screenshot TEXT,' +
+              'structure_screenshot TEXT,' +
+              'timestamp INTEGER,' +
+              'rect TEXT,' +
+              'visits INTEGER DEFAULT 0,' +
+              'lastview INTEGER DEFAULT 0,' +
+                // updated even on tab switching! Different from HistoryItem's lastVisited
+              'active INTEGER DEFAULT 0' +
+            ');'
+          );
+          tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS entry_idx ON entry(url);');
 
-    // console.log('database init');
+          tx.executeSql(
+            'CREATE TABLE IF NOT EXISTS structure(' +
+              'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
+              'entry_id INTEGER NOT NULL,' +
+              's0 INTEGER NOT NULL,' +
+              's1 INTEGER NOT NULL,' +
+              's2 INTEGER NOT NULL,' +
+              's3 INTEGER NOT NULL,' +
+              's4 INTEGER NOT NULL,' +
+              's5 INTEGER NOT NULL,' +
+              'FOREIGN KEY(entry_id) REFERENCES entry(id)' +
+            ');'
+          );
+          tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS structure_idx ON structure(entry_id);');
 
-    db.transaction(function(tx){
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS entry(' +
-          'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-          'url TEXT NOT NULL,' +
-          'title TEXT,' +
-          'screenshot TEXT,' +
-          'structure_screenshot TEXT,' +
-          'timestamp INTEGER,' +
-          'rect TEXT,' +
-          'visits INTEGER DEFAULT 0,' +
-          'lastview INTEGER DEFAULT 0,' +
-            // updated even on tab switching! Different from HistoryItem's lastVisited
-          'active INTEGER DEFAULT 0' +
-        ');'
+          var i, query = [];
+          // a0 b0 c0 d0 a1 b1 c1 d1 ...... a8 b8 c8 d8.
+          for(i = 0; i<9; i+=1){
+            query.push('a'+i+' BOOLEAN NOT NULL,' +
+                       'b'+i+' BOOLEAN NOT NULL,' +
+                       'c'+i+' BOOLEAN NOT NULL,' +
+                       'd'+i+' BOOLEAN NOT NULL,');
+          }
+          tx.executeSql(
+            'CREATE TABLE IF NOT EXISTS colormap(' +
+              'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
+              'entry_id INTEGER NOT NULL,'+
+              query.join('') +
+              'FOREIGN KEY(entry_id) REFERENCES entry(id)' +
+            ');'
+          );
+          tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS colormap_idx ON colormap(entry_id);');
+        }, function(e){ // transaction error callback
+          console.error('DB Creation Error', e);
+          dfd.reject(e);
+        }, function(results){ // transaction success callback
+          initialized = true;
+          console.log('...database initialized.');
+          dfd.resolve(db);
+        }
       );
-      tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS entry_idx ON entry(url);');
-
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS structure(' +
-          'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-          'entry_id INTEGER NOT NULL,' +
-          's0 INTEGER NOT NULL,' +
-          's1 INTEGER NOT NULL,' +
-          's2 INTEGER NOT NULL,' +
-          's3 INTEGER NOT NULL,' +
-          's4 INTEGER NOT NULL,' +
-          's5 INTEGER NOT NULL ' +
-        ');'
-      );
-      tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS structure_idx ON structure(entry_id);');
-
-      var i, query = [];
-      // a0 b0 c0 d0 a1 b1 c1 d1 ...... a8 b8 c8 d8.
-      for(i = 0; i<9; i+=1){
-        query.push('a'+i+' BOOLEAN NOT NULL, ' +
-                   'b'+i+' BOOLEAN NOT NULL, ' +
-                   'c'+i+' BOOLEAN NOT NULL, ' +
-                   'd'+i+' BOOLEAN NOT NULL');
-      }
-      tx.executeSql(
-        'CREATE TABLE IF NOT EXISTS colormap(' +
-          'id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,' +
-          'entry_id INTEGER NOT NULL,' +
-          query.join(', ') +
-        ');'
-      );
-      tx.executeSql('CREATE UNIQUE INDEX IF NOT EXISTS colormap_idx ON colormap(entry_id);');
-
-    }, [], function(results){
-      // transaction success callback
+    }else{ // database already initialized.
       dfd.resolve(db);
-    }, function(tx, e){
-      // transaction error callback
-      console.error('DB Creation Error', e);
-      dfd.reject(e);
-    });
-
+    }
     return dfd.promise();
   }());
 
