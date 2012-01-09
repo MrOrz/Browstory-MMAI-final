@@ -88,7 +88,7 @@ function segmentation(img, rect, debug){
 	var adj = new Array(8),
 		L = new Array(8),
 		C = new Array(8),
-		thr = 0.002;
+		thr = 0.010;
 
 	adj[0] = [1,3];
 	adj[1] = [4];
