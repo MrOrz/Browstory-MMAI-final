@@ -15,10 +15,10 @@
     colorize = function(){ // colorize all color maps
       $('.colormap').find('span').each(function(){
         var color = parseFloat($(this).text(), 10);
-        if(color < 0){
-          // -1, -2, -3
-          $(this).css('background', 'hsl(0,0%,' + (-50*(color+1)) + '%)');
-          if(color === -1){ // make font white if background is black
+        if(color <= 0){
+          // 0, -1, -2, -3
+          $(this).css('background', 'hsl(0,0%,' + (-33*color) + '%)');
+          if(color >= -1){ // make font white if background is black
             $(this).css('color', '#fff');
           }
         }else{
