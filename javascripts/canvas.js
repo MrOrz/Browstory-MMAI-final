@@ -6,43 +6,94 @@
 
 (function($, undefined){
   "use strict";
-  var w, h, imageData, imageDataHist = [], // imageData history
-      canvas, ctx,
+  // global variables to canvas.js
+  var w, h,
+      canvas, sliceCanvas, ctx, slicectx,
       rects, // containing rect
-      getOffset = function(e){
-        var x = e.pageX - canvas.offsetLeft,
-            y = e.pageY - canvas.offsetTop - document.body.scrollTop,
-            rectIdx;
-        // off-canvas correction
-        x = (x<0?0:(x>w?w:x)); y = (y<0?0:(y>h?h:y));
+      canvasPosition;
+      // end of global variables
 
-        $.each(rects, function(idx){
-          if(this.left <= x && this.top <= y &&
-             this.left + this.width >= x && this.top + this.height >= y){
-            rectIdx = idx;
-            return false;
-          }
-        });
-        return {
-          x: x,
-          y: y,
-          rectIdx: rectIdx,
-          rect: rects[rectIdx]
-        };
-      },
-      drawLine = function(startX, startY, endX, endY){
-        // ASSERT(imageDataHist[len-1] is the original canvas imageData)
+  // HistRecord & HistRecordCollection class definition
+  //
+  var
+  HistRecord = function(imageData, simageData, customRects){
+    this.imageData  = imageData  || ctx.getImageData(0,0,w,h);
+    this.simageData = simageData || slicectx.getImageData(0,0,w,h);
+    this.rects =     customRects || rects.slice(0); // back up current rects
+  },
+  HistRecordCollection = function(){
+    var _records = [];
+    // pushing histRecord
+    //
+    this.push = function(histRecord){
+      if(! histRecord instanceof HistRecord){
+        console.error('Invalid entry to push');
+      }
+      _records.push(histRecord);
+    };
 
-        // put old image data
-        ctx.putImageData(imageDataHist[imageDataHist.length-1], 0, 0);
+    // pop last history record
+    //
+    this.pop = function(){
+      if(_records.length){
+        // pop the record and put the image data into current canvas
+        var record = _records.pop();
+        ctx.putImageData(record.imageData, 0, 0);
+        slicectx.putImageData(record.simageData, 0, 0);
+        rects = record.rects.slice(0);
+        return record;
+      }
+    };
 
-        // do the drawing
-        ctx.beginPath();
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-        ctx.stroke();
-        ctx.closePath();
+    // return the last record in stack
+    //
+    this.end = function(){
+      return _records[_records.length-1];
+    };
+  };
+
+  // global history
+  var history = new HistRecordCollection();
+
+  // global methods to canvas.js
+  var
+    drawLine = function(startX, startY, endX, endY){
+      // ASSERT(imageDataHist[len-1] is the original canvas imageData)
+
+      // put old image data
+      slicectx.putImageData(history.end().simageData, 0, 0);
+
+      // do the drawing
+      slicectx.beginPath();
+      slicectx.moveTo(startX, startY);
+      slicectx.lineTo(endX, endY);
+      slicectx.stroke();
+      slicectx.closePath();
+    },
+    getOffset = function(e){
+      var x = e.pageX - canvasPosition.left,
+          y = e.pageY - canvasPosition.top - document.body.scrollTop,
+          rectIdx;
+      // off-canvas correction
+      x = (x<0?0:(x>w?w:x)); y = (y<0?0:(y>h?h:y));
+
+      $.each(rects, function(idx){
+        if(this.left <= x && this.top <= y &&
+           this.left + this.width >= x && this.top + this.height >= y){
+          rectIdx = idx;
+          return false;
+        }
+      });
+      return {
+        x: x,
+        y: y,
+        rectIdx: rectIdx,
+        rect: rects[rectIdx]
       };
+    };
+  // end of global methods
+
+
 
   // init script
   //
@@ -50,26 +101,44 @@
     // populating variables global to canvas.js
     //
     canvas = $('#query').get(0);
+    sliceCanvas = $('#slice').get(0);
     ctx = canvas.getContext('2d');
+    slicectx = sliceCanvas.getContext('2d');
+
     w = canvas.width; h = canvas.height;
+    canvasPosition = $('.canvas-container').offset();
+
+    // initial rects
     rects = [{left: 0, top: 0, width: w, height: h}];
 
     // set context
-    ctx.lineJoin = "round"; ctx.lineWidth = 2;
+    slicectx.lineJoin = "round"; slicectx.lineWidth = 2;
 
     // private variables used when drawing lines (mostly)
     var start, current,  // points returned by getOffset(e)
-        filling = false, // tool selection, false => drawing lines
+        tool = 'slice', // tool === $('.tool.selected').data('tool')
         vertical; // how start & current is positioned
 
-    $(canvas).mousedown(function(e){
-      start = getOffset(e); // set start point
-
+    $(sliceCanvas).mousedown(function(e){
       // push the current image data into history
       //
-      imageDataHist.push(ctx.getImageData(0,0,w,h));
+
+      history.push(new HistRecord());
+
+      // tool operations
+      //
+      if(tool === 'slice'){
+        start = getOffset(e); // set start point
+      }else if(tool === 'fill'){
+        start = getOffset(e);
+        ctx.fillStyle = $('.colorpicker').val();
+        ctx.fillRect(start.rect.left, start.rect.top, start.rect.width, start.rect.height);
+        start = null; // Drawing done.
+        $(canvas).trigger('draw', [rects]);
+      }
+
     }).mousemove(function(e){
-      if(start && !filling){
+      if(start && tool === 'slice'){
         // set private variables
         //
         current = getOffset(e);
@@ -84,7 +153,7 @@
         }
       }
     }).on('mouseup mouseleave', function(){
-      if(start && current && !filling){
+      if(start && current && tool === 'slice'){
         // divide the rects into two
         var target = start.rect, idx = start.rectIdx;
         if(vertical){
@@ -136,10 +205,39 @@
 
     });
 
-    $('.clear-query').click(function(){
-      canvas.getContext('2d').clearRect(0,0,canvas.width, canvas.height);
+    // clear canvas button
+    $('.clear').click(function(){
+      // reset the two canvas and the rects array
+      ctx.clearRect(0,0,w,h);
+      slicectx.clearRect(0,0,w,h);
       rects = [{left: 0, top: 0, width: w, height: h}];
-      imageDataHist = [];
+
+      // push current state into history
+      history.push(new HistRecord());
     });
+
+    // undo canvas button
+    $('.undo').click(function(){
+      history.pop();
+    });
+
+    // initialize tools
+    tool = $('.tool.selected').data('tool');
+    $('.tool').click(function(){
+      tool = $(this).data('tool');
+      $('.tool').removeClass('selected');
+      $(this).addClass('selected');
+    });
+
+
+    // initialize color picker
+    $.fn.colorPicker.defaultColors = [
+      // gray    0~67.5   90~157.5  180~247.5 270~337.5
+      '222222', 'FF0000', '80FF00', '00FFFF', '7F00FF',
+      '666666', 'FF6000', '20FF00', '009FFF', 'DF00FF',
+      'AAAAAA', 'FFBF00', '00FF40', '0040FF', 'FF00BF',
+      'EEEEEE', 'DFFF00', '00FF9F', '2000FF', 'FF0060'
+    ];
+    $('.colorpicker').colorPicker();
   });
 }(jQuery))
