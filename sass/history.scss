@@ -56,10 +56,19 @@ header{
     @include adjust-font-size-to(18px);
     color: $main-color-1;
   }
+  .search-tab{
+    display: none;
+  }
+  &.show-result{
+    .recent-tab{
+      display: none;
+    }
+    .search-tab{
+      display: block;
+    }
+  }
 }
-.recent-tab{
-  display: none;
-}
+
 #hidden{
   overflow: hidden;
   height: 0;
