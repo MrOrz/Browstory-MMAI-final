@@ -104,11 +104,15 @@
                   tx.executeSql(
                     'UPDATE entry SET screenshot=?, structure_screenshot=?, ' +
                     'rect=? WHERE id=?;',
-                    [dataURL, structure_dataURL, JSON.stringify(rect), dbIdOf(windowId, tabId)]);
-
-                  $.updatefv(tx, dbIdOf(windowId, tabId), result.structure, result.colormap);
-
+                    [dataURL, structure_dataURL, JSON.stringify(rect), dbIdOf(windowId, tabId)], function(tx, result){
+                      console.log('update screenshot affected result', result);
+                    });
                 }, txErr);
+                db.transaction(function(tx){
+                  $.updatefv(tx, dbIdOf(windowId, tabId), result.structure, result.colormap);
+                }, function(){
+                  console.error('updatefv error', arguments);
+                });
                 console.info('... screenshot taken.');
               });
 
