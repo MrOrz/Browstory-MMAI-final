@@ -116,6 +116,7 @@ $(function(){
 
   // canvas draw complete event handler
   $(canvas).on('draw', function(e, rect){
+    $searchTarget.empty();
     var tmpCanvas = $('<canvas>').get(0);
     tmpCanvas.width = canvas.width; tmpCanvas.height = canvas.height;
     tmpCanvas.getContext('2d').putImageData(
@@ -123,11 +124,11 @@ $(function(){
     );
 
     var result = segmentation(tmpCanvas, rect);
-    $(result.canvas).insertAfter($(canvas));
+    $(result.canvas).insertAfter($('#slice')).show().delay(1000).hide('slow', function(){$(this).remove()});
 
-    $.queryByStructure(result.structure).done(function(items){
-      console.log('structure query result:', items);
-      $searchTarget.empty().append($tmpl.tmpl(items));
+    $.query(result.structure, result.colormap).done(function(items){
+      console.log('query result:', items);
+      $searchTarget.append($tmpl.tmpl(items));
     })
 
   });

@@ -28,15 +28,24 @@ header{
   h2{
     @include adjust-font-size-to(18px);
   }
-  #query{ // the canvas
-    border: 1px solid $border-color;
-    background: url(../images/checkerboard.jpg);
-    cursor: crosshair;
-    border-radius: 3px;
-    box-shadow: inset 0px 2px 4px rgba(#000, .5), 0 2px 1px rgba(#fff, .9);
-  }
 
 }
+.canvas-container{
+  position: relative;
+}
+#query{ // the canvas
+  border: 1px solid $border-color;
+  background: url(../images/checkerboard.jpg);
+  cursor: crosshair;
+  border-radius: 3px;
+  box-shadow: inset 0px 2px 4px rgba(#000, .5), 0 2px 1px rgba(#fff, .9);
+}
+#slice{ // transparent overlay
+  border: 1px solid transparent; // align coordinate with query
+  position: absolute;
+  left: 0; top: 0;
+}
+
 #body{
   background: $bg-color-1;
   color: #000;
@@ -58,6 +67,19 @@ header{
 
 #recent-target{
   text-align: center;
+}
+
+.tool{
+  &.selected{
+    text-decoration: none;
+  }
+  &.fill.selected ~ .color_picker{
+    display: inline-block;
+  }
+}
+
+.color_picker{ // javascript-generated div
+  display: none;
 }
 
 // item style

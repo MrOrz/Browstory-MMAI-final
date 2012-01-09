@@ -3,16 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <title>Browstory</title>
+  <link rel="stylesheet" href="../stylesheets/colorPicker.css" type="text/css" />
   <link rel="stylesheet" type="text/css" href="../stylesheets/history.css" media="all">
+
+  <!-- jQuery and plugins -->
   <script type="text/javascript" src="../javascripts/jquery.min.js"></script>
+  <script type="text/javascript" src="../javascripts/jquery.colorPicker.js"></script>
   <script type="text/javascript" src="../javascripts/jquery.tmpl.js"></script>
-  <script type="text/javascript" src="../javascripts/db.js"></script>
+
+  <!-- picastic -->
   <script type="text/javascript" src="../javascripts/process/pixastic/pixastic.core.js"></script>
   <script type="text/javascript" src="../javascripts/process/pixastic/actions/crop.js"></script>
+
+  <!-- extension -->
+  <script type="text/javascript" src="../javascripts/db.js"></script>
   <script type="text/javascript" src="../javascripts/process/util.js"></script>
   <script type="text/javascript" src="../javascripts/process/segmentation.js"></script>
   <script type="text/javascript" src="../javascripts/canvas.js"></script>
   <script type="text/javascript" src="../javascripts/history.js"></script>
+
 </head>
 <body>
   <header>
@@ -21,9 +30,17 @@
       <input type="text" class="keyword" name="keyword" id="" placeholder="Filter by keyword">
     </form>
     <h2>Sketch</h2>
-      <canvas id="query" width="180" height="120"></canvas>
-      <button type="button" class="clear-query">Clear</button>
-      <canvas id="filled" width="180" height="120"></canvas>
+      <div class="canvas-container">
+        <canvas id="query" width="180" height="120"></canvas>
+        <canvas id="slice" width="180" height="120"></canvas>
+      </div>
+      <ul>
+        <li><a href="javascript:;" title="Slice tool" class="tool slice selected" data-tool="slice">Slice</a></li>
+        <li><a href="javascript:;" title="Fill tool" class="tool fill" data-tool="fill">Fill</a>
+        <input type="color" class="colorpicker" value="#0000ff"></li>
+        <li><a href="javascript:;" title="Undo" class=" undo">Undo</a></li>
+        <li><a href="javascript:;" title="Clear" class=" clear">Clear</a></li>
+      </ul>
   </header>
   <div id="body">
     <section class="recent-tab">
