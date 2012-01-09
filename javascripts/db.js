@@ -1,3 +1,4 @@
+/*global Sha1 */
 /*
  * db.js
  *
@@ -11,6 +12,7 @@
     DB_VERSION = "0.1",
     DB_SIZE = 50 * 1024 * 1024, // 10MB database
     initialized = false,
+    db, // database connection
     tempSName = function (S){
       var ret = "S";
       $.each(S, function(){
@@ -33,6 +35,9 @@
         ret += (num+3).toString(20);
       });
       return ret;
+    },
+    tempURLName = function(urls){
+      return "U" + Sha1.hash(JSON.stringify(urls)).substr(0,16);
     };
 
   // The variable db must be guarded because even though openDatabase() method
@@ -45,8 +50,8 @@
   //
   $.initDB = (function(){
     var
-      dfd = $.Deferred(),
-      db = openDatabase('link-recording', DB_VERSION, 'link recording', DB_SIZE);
+      dfd = $.Deferred();
+    db = db || openDatabase('link-recording', DB_VERSION, 'link recording', DB_SIZE);
     if(!initialized){
       console.log('database init');
       db.transaction(
@@ -148,15 +153,15 @@
     );
   };
 
-  // callback used by $.queryByStructure and $.queryByColormap
+  // callback used by $.queryBy*
   //
-  var createTempCallback = function(tx, dfd, tempName, queryOnly){
+  var createTempCallback = function(tx, dfd, tempName, column, queryOnly){
     if(queryOnly){
       dfd.resolve(tempName);
     }else{
       tx.executeSql(
-        'SELECT entry.*, s_sim AS sim FROM ' + tempName +
-        ' LEFT JOIN entry ON entry.id = entry_id ORDER BY s_sim DESC;',
+        'SELECT entry.*, '+column+' AS sim FROM ' + tempName +
+        ' LEFT JOIN entry ON entry.id = entry_id ORDER BY sim DESC;',
         [], function(tx, results){
           dfd.resolve($.getItems(results));
         }
@@ -187,7 +192,7 @@
           ') GROUP BY entry_id ORDER BY s_sim DESC;',
           S, // SQL parameters = S, the array of structure features.
           function(){
-            createTempCallback(tx, dfd, tempName, queryOnly)
+            createTempCallback(tx, dfd, tempName, 's_sim', queryOnly)
           }
         );
       }, function(){
@@ -237,7 +242,7 @@
           ') GROUP BY entry_id ORDER BY c_sim DESC;',
           params, // SQL parameters
           function(){
-            createTempCallback(tx, dfd, tempName, queryOnly)
+            createTempCallback(tx, dfd, tempName, 'c_sim', queryOnly)
           }
         );
       }, function(){
@@ -247,28 +252,100 @@
     return dfd.promise();
   };
 
+  $.queryByURLs = function(urls, queryOnly){
+    var dfd = $.Deferred(),
+        tempName
+
+    if(!urls || urls.length === 0){
+      dfd.resolve(false);
+      return dfd.promise();
+    }
+
+    tempName = tempURLName(urls);
+    $.initDB.done(function(db){
+      /*console.log('CREATE TEMP TABLE IF NOT EXISTS ' + tempName + ' AS '+
+          'SELECT id AS entry_id FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;');*/
+      db.transaction(function(tx, results){
+        tx.executeSql
+        (
+          'CREATE TEMP TABLE IF NOT EXISTS ' + tempName + ' AS '+
+          'SELECT id AS entry_id FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;',
+          [], function(){
+            createTempCallback(tx, dfd, tempName, 'lastview', queryOnly)
+          }
+        );
+      },function(){
+        console.error('url query error', arguments);
+      });
+    });
+    return dfd.promise();
+  }
+
   // -------------------------------------------------
   // -------------------------------------------------
   // -------------------------------------------------
 
-  $.query = function(S, C){
+  $.query = function(S, C, URLs){
     var dfd = $.Deferred();
-    $.when($.initDB, $.queryByStructure(S, true), $.queryByColormap(C, true)).done(function(db, sname, cname){
+    $.when($.initDB,
+           $.queryByStructure(S, true),
+           $.queryByColormap(C, true),
+           $.queryByURLs(URLs, true)).done(function(db, sname, cname, uname){
       console.log('Querying ', sname, cname);
-      if(cname === false){ // all transparent, skip color similarity
+
+      // sname cannot be false, since the case that only uname != false
+      // should be covered by direct invoke of $.queryByURLs
+      //
+      if(uname === false && cname === false){ // all transparent, skip color similarity
         // query structrue again, this time do the query.
+        console.log('Structure-only search ======');
+
         $.queryByStructure(S).done(function(items){
           dfd.resolve(items);
         });
-      }else{ // mix the two temp table to get the similarity, and left join the entry
-        console.log('QUERY: ', 'SELECT entry.*, 3*s_sim+2*(c_sim NOTNULL) AS sim '+
-            'FROM '+sname+' LEFT OUTER JOIN '+cname+' USING (entry_id) '+
-                           'LEFT JOIN entry ON '+cname+'.entry_id = entry.id '+
-            'ORDER BY sim DESC;');
+      }else if(uname !== false && cname === false){
+        // mix up URL results with structure results
+        console.log('URL-Structure search ======');
+
+        db.readTransaction(function(tx){
+          tx.executeSql(
+            'SELECT entry.*, s_sim AS sim FROM '+ uname +
+              ' LEFT JOIN '+sname+' USING (entry_id)'+
+              ' LEFT JOIN entry ON '+uname+'.entry_id=entry.id '+
+            'ORDER BY sim DESC;', [],
+            function(tx, results){
+              dfd.resolve($.getItems(results));
+            }
+          );
+        },function(){
+          console.error('query error', arguments)
+        }); // end of readTransaction
+      }else if(uname === false && cname !== false){
+        // mix the two temp table to get the similarity, and left join the entry
+        console.log('Structure-Color search ======');
+
         db.readTransaction(function(tx){
           tx.executeSql(
             'SELECT entry.*, 3*s_sim+2*(c_sim NOTNULL) AS sim '+
             'FROM '+sname+' LEFT OUTER JOIN '+cname+' USING (entry_id) '+
+                           'LEFT JOIN entry ON '+sname+'.entry_id = entry.id '+
+            'ORDER BY sim DESC;', [],
+            function(tx, results){
+              dfd.resolve($.getItems(results));
+            }
+          );
+        }, function(){
+          console.error('query error', arguments);
+        }); // end of readTransaction
+      }else{ // uname !== false, cname !== false
+        // mix the three temp table to get the similarity
+        console.log('URL-Structure-Color search ======');
+
+        db.readTransaction(function(tx){
+          tx.executeSql(
+            'SELECT entry.*, 3*s_sim+2*(c_sim NOTNULL) AS sim '+
+            'FROM '+uname+' LEFT JOIN '+sname+ ' USING (entry_id) '+
+                           'LEFT OUTER JOIN '+cname+' USING (entry_id) '+
                            'LEFT JOIN entry ON '+sname+'.entry_id = entry.id '+
             'ORDER BY sim DESC;', [],
             function(tx, results){

@@ -12,6 +12,8 @@ $(function(){
     recentItems, searchResults, // caches items for redraw
     itemCount, // counting how many items in a row
     largeCount, smallCount, tinyCount,
+    queryURLs = [], // whether we are querying with urls
+    canvasResult = null, // whether we are querying with canvas
     // testing item width and populating *Count.
     //
     measure = function(){
@@ -81,19 +83,22 @@ $(function(){
     }
     var $this = $(this);
     search_handler = setTimeout(function(){
+      $searchTarget.empty();
       chrome.history.search({text: $this.val()}, function(results){
-        var urls = $.map(results, function(hisItem){return '"' + hisItem.url + '"'}).join(',');
-        $.initDB.done(function(db){
-          db.readTransaction(function(tx, results){
-            console.log('SELECT * FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;');
-            tx.executeSql('SELECT * FROM entry WHERE url IN ('+ urls + ') ORDER BY lastview DESC;',
-            [], function(tx, results){
-              $searchTarget.empty().append($tmpl.tmpl($.getItems(results)));
+        queryURLs = $.map(results, function(hisItem){return '"' + hisItem.url + '"'}).join(',');
+        if(queryURLs.length){
+          if(canvasResult){
+            // do URL-Canvas search
+            $.query(canvasResult.structure, canvasResult.colormap, queryURLs).done(function(items){
+              $searchTarget.append($tmpl.tmpl(items));
             });
-          },function(){
-            console.error('read transaction error on search', arguments);
-          });
-        });
+          }else{
+            // just do URL search & cache
+            $.queryByURLs(queryURLs).done(function(items){
+              $searchTarget.append($tmpl.tmpl(items));
+            });
+          }
+        }
       });
     }, 200);
   });
@@ -124,12 +129,17 @@ $(function(){
     );
 
     var result = segmentation(tmpCanvas, rect);
-    $(result.canvas).insertAfter($('#slice')).show().delay(1000).hide('slow', function(){$(this).remove()});
+    //$(result.canvas).insertAfter($('#slice')).show().delay(1000).hide('slow', function(){$(this).remove()});
 
-    $.query(result.structure, result.colormap).done(function(items){
-      console.log('query result:', items);
+    $.query(result.structure, result.colormap, queryURLs).done(function(items){
       $searchTarget.append($tmpl.tmpl(items));
-    })
+    });
 
+    // save the result here.
+    canvasResult = result;
   });
+
+  $('.clear').click(function(){
+    canvasResult = null; // unset canvasResult
+  })
 });
