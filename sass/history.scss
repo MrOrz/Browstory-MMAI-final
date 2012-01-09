@@ -2,7 +2,10 @@
 
 $bg-color-1: #fff;
 $bg-color-2: #EAEEF3;
+$button-color: #BBCEE9;
+$button-border-color: #8FAAD9;
 $border-color: #C6C9CE;
+
 $main-color-1: #53637D;
 
 
@@ -32,6 +35,8 @@ header{
 }
 .canvas-container{
   position: relative;
+  width: 180px;
+  margin: 0 auto;
 }
 #query{ // the canvas
   border: 1px solid $border-color;
@@ -78,17 +83,69 @@ header{
   text-align: center;
 }
 
-.tool{
-  &.selected{
-    text-decoration: none;
-  }
-  &.fill.selected ~ .color_picker{
+.selected{
+  .color_picker{
     display: inline-block;
+  }
+  .fill{
+    width:32px;
   }
 }
 
 .color_picker{ // javascript-generated div
   display: none;
+  vertical-align: middle;
+  margin-right: .5em;
+}
+
+.toolbar{
+  text-align: center;
+  li{
+    box-shadow: 0 -1px 1px rgba(#000,.3), 0 1px 1px #fff;
+    background: $button-color;
+    display: inline-block;
+    border: 1px solid $button-border-color;
+    border-right-width: 0;
+    &:hover{
+      box-shadow: 0 -1px 1px rgba(#000,.3), 0 1px 1px #fff,
+                  inset 0 3px 7px rgba(#fff, .4), inset 0 -3px 7px rgba(#fff, .4);
+    }
+    &:last-child{
+      border-top-right-radius: 3px;
+      border-bottom-right-radius: 3px;
+      border-right-width: 1px;
+    }
+    &:first-child{
+      border-top-left-radius: 3px;
+      border-bottom-left-radius: 3px;
+    }
+    &.selected{
+      box-shadow: 0 -1px 1px rgba(#000,.3), 0 1px 1px rgba(#fff, .7),
+                  inset 0 3px 5px rgba(#000, .1), inset 0 -3px 5px rgba(#000, .1);
+      background: darken($button-color, 5%);
+    }
+  }
+  a{
+    height: 32px;
+    width: 32px;
+    display: inline-block;
+    text-indent: -9999px;
+    vertical-align: middle;
+  }
+  .slice{
+    background: url(../images/slice.png) center center no-repeat;
+  }
+
+  .fill{
+    background: url(../images/fill.png) center center no-repeat;
+  }
+
+  .undo{
+    background: url(../images/undo.png) center center no-repeat;
+  }
+  .clear{
+    background: url(../images/trash.png) center center no-repeat;
+  }
 }
 
 // item style

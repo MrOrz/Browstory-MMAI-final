@@ -116,7 +116,7 @@
 
     // private variables used when drawing lines (mostly)
     var start, current,  // points returned by getOffset(e)
-        tool = 'slice', // tool === $('.tool.selected').data('tool')
+        tool = 'slice', // tool === $('.selected .tool').data('tool')
         vertical; // how start & current is positioned
 
     $(sliceCanvas).mousedown(function(e){
@@ -222,11 +222,11 @@
     });
 
     // initialize tools
-    tool = $('.tool.selected').data('tool');
+    tool = $('.selected .tool').data('tool');
     $('.tool').click(function(){
       tool = $(this).data('tool');
-      $('.tool').removeClass('selected');
-      $(this).addClass('selected');
+      $('.tool').parent().removeClass('selected');
+      $(this).parent().addClass('selected');
     });
 
 

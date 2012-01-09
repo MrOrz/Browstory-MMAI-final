@@ -2,14 +2,14 @@ div.color_picker {
   height: 16px;
   width: 16px;
   padding: 0 !important;
-  border: 1px solid #ccc;
+  border: 1px solid #8FAAD9;
   background: url(../images/colorpicker/arrow.gif) no-repeat top right;
   cursor: pointer;
   line-height: 16px;
 }
 
 div#color_selector {
-  width: 84px;
+  width: 90px;
   position: absolute;
   border: 1px solid #598FEF;
   background-color: #EFEFEF;
