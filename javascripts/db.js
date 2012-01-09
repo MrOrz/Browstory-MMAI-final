@@ -10,7 +10,30 @@
     // constants
     DB_VERSION = "0.1",
     DB_SIZE = 50 * 1024 * 1024, // 10MB database
-    initialized = false;
+    initialized = false,
+    tempSName = function (S){
+      var ret = "S";
+      $.each(S, function(){
+        ret += this;
+      });
+      return ret;
+    },
+    tempCName = function (C){
+      var ret = "C";
+      $.each(C, function(){
+        var num = this;
+        if(num === null){
+          ret += 'N';
+          return; // continue
+        }
+        if(num > 0){
+          num /= 22.5; // 1~16
+        }
+        // num is now -3~16 here.
+        ret += (num+3).toString(20);
+      });
+      return ret;
+    };
 
   // The variable db must be guarded because even though openDatabase() method
   // is synchronous, its database creation callback is not.
@@ -92,6 +115,7 @@
     return dfd.promise();
   }());
 
+
   // utility function that returns query results as javascript array.
   //
   $.getItems = function(results){
@@ -124,61 +148,137 @@
     );
   };
 
-  // @params S: 6-dimension structure feature vector
+  // callback used by $.queryByStructure and $.queryByColormap
   //
-  $.queryByStructure = function(S){
-    var dfd = $.Deferred();
+  var createTempCallback = function(tx, dfd, tempName, queryOnly){
+    if(queryOnly){
+      dfd.resolve(tempName);
+    }else{
+      tx.executeSql(
+        'SELECT entry.*, s_sim AS sim FROM ' + tempName +
+        ' LEFT JOIN entry ON entry.id = entry_id ORDER BY s_sim DESC;',
+        [], function(tx, results){
+          dfd.resolve($.getItems(results));
+        }
+      );
+    }
+  };
+
+  // @params S: 6-dimension structure feature vector
+  // @params queryOnly: if true, only the table name is sent to done callback
+  //
+  $.queryByStructure = function(S, queryOnly){
+    var dfd = $.Deferred(),
+        tempName = tempSName(S);
+    //console.log('tempSname:', tempName);
+
     $.initDB.done(function(db){
-      db.readTransaction(function(tx){
+      db.transaction(function(tx){
+        // create temp table to hold the structure query result
         tx.executeSql(
-          'SELECT COUNT(entry_id) AS sim, entry.* FROM (' +
+          'CREATE TEMP TABLE IF NOT EXISTS ' + tempName + ' AS '+
+          'SELECT entry_id, COUNT(entry_id) AS s_sim FROM (' +
             'SELECT entry_id FROM structure WHERE s0 = ? UNION ALL ' +
             'SELECT entry_id FROM structure WHERE s1 = ? UNION ALL ' +
             'SELECT entry_id FROM structure WHERE s2 = ? UNION ALL ' +
             'SELECT entry_id FROM structure WHERE s3 = ? UNION ALL ' +
             'SELECT entry_id FROM structure WHERE s4 = ? UNION ALL ' +
             'SELECT entry_id FROM structure WHERE s5 = ?' +
-          ') LEFT JOIN entry ON entry_id = entry.id' +
-          ' GROUP BY entry_id ORDER BY sim DESC;',
+          ') GROUP BY entry_id ORDER BY s_sim DESC;',
           S, // SQL parameters = S, the array of structure features.
-          function(tx, results){
-            dfd.resolve($.getItems(results));
+          function(){
+            createTempCallback(tx, dfd, tempName, queryOnly)
           }
         );
       }, function(){
-        console.error('query error', arguments);
+        console.error('structure query error', arguments);
       });
     });
     return dfd.promise();
   };
 
-  $.queryByColormap = function(C){
+  // @params C: 36-dimension color feature vector
+  // @params queryOnly: if true, only the table name is sent to done callback
+  //
+  $.queryByColormap = function(C, queryOnly){
     var dfd = $.Deferred(),
       query = [], // the list of SELECT statements, one per non-transparent area.
-      params = []; // SQL parameters
-    $.each(C, function(idx, qc){
-      // qc: query color.
-      if(qc){
-        var i = Math.floor(idx/4);
-        // i is the area number.
+      params = [], // SQL parameters
+      i,
+      tempName = tempCName(C);
+
+    //console.log('tempCname:', tempName);
+    for(i=0; i<C.length; i+=4){
+      var idx = i/4;
+      // Only the 1st dominant color is used.
+      // quantized dominant color should be C[i] and C[i+1].
+      if(C[i]!==null){ // if not transparent
         query.push('SELECT entry_id FROM colormap WHERE ' +
-                   'a'+i+'=? OR b'+i+'=? OR c'+i+'=? OR d'+i+'=? ');
-        params.push(qc);
+                   'a'+idx+'=? OR b'+idx+'=? OR c'+idx+'=? OR d'+idx+'=? ');
+        params.push(C[i], C[i+1], C[i], C[i+1]);
       }
-    })
+    }
+
+    if(query.length === 0){
+      if(queryOnly){
+        dfd.resolve(false);
+      }else{
+        dfd.resolve([]);
+      }
+      return dfd.promise();
+    }
+
     $.initDB.done(function(db){
-      db.readTransaction(function(tx){
+      db.transaction(function(tx){
         tx.executeSql(
-          // TODO: join entry table on the outer SELECT!
-          'SELECT entry_id, COUNT(entry_id) AS sim FROM (' +
+          'CREATE TEMP TABLE IF NOT EXISTS ' + tempName + ' AS '+
+          'SELECT entry_id, COUNT(entry_id) AS c_sim FROM (' +
             query.join('UNION ALL ') +
-          ') GROUP BY entry_id ORDER BY sim DESC;',
+          ') GROUP BY entry_id ORDER BY c_sim DESC;',
           params, // SQL parameters
-          function(tx, results){
-            dfd.resolve($.getItems(results));
+          function(){
+            createTempCallback(tx, dfd, tempName, queryOnly)
           }
         );
+      }, function(){
+        console.error('color query error', arguments)
       });
+    });
+    return dfd.promise();
+  };
+
+  // -------------------------------------------------
+  // -------------------------------------------------
+  // -------------------------------------------------
+
+  $.query = function(S, C){
+    var dfd = $.Deferred();
+    $.when($.initDB, $.queryByStructure(S, true), $.queryByColormap(C, true)).done(function(db, sname, cname){
+      console.log('Querying ', sname, cname);
+      if(cname === false){ // all transparent, skip color similarity
+        // query structrue again, this time do the query.
+        $.queryByStructure(S).done(function(items){
+          dfd.resolve(items);
+        });
+      }else{ // mix the two temp table to get the similarity, and left join the entry
+        console.log('QUERY: ', 'SELECT entry.*, 3*s_sim+2*(c_sim NOTNULL) AS sim '+
+            'FROM '+sname+' LEFT OUTER JOIN '+cname+' USING (entry_id) '+
+                           'LEFT JOIN entry ON '+cname+'.entry_id = entry.id '+
+            'ORDER BY sim DESC;');
+        db.readTransaction(function(tx){
+          tx.executeSql(
+            'SELECT entry.*, 3*s_sim+2*(c_sim NOTNULL) AS sim '+
+            'FROM '+sname+' LEFT OUTER JOIN '+cname+' USING (entry_id) '+
+                           'LEFT JOIN entry ON '+sname+'.entry_id = entry.id '+
+            'ORDER BY sim DESC;', [],
+            function(tx, results){
+              dfd.resolve($.getItems(results));
+            }
+          );
+        }, function(){
+          console.error('query error', arguments);
+        }); // end of readTransaction
+      }
     });
     return dfd.promise();
   };
