@@ -49,10 +49,11 @@ $(function(){
     testSearching = function(){
       $searchTarget.empty();
       console.log('testSearching: ', canvasResult, queryURLs);
-      if(!canvasResult && queryURLs.length === 0){
+      if(!canvasResult && queryURLs.length === 0){ // no search result
         $('#body').removeClass('show-result');
       }else{
-        $('#body').addClass('show-result');
+        $('#body').addClass('show-result'); // search result
+        $searchTarget.empty();
         if(canvasResult){
           $.query(canvasResult.structure, canvasResult.colormap, queryURLs).done(function(items){
             $searchTarget.append($tmpl.tmpl(items));
@@ -100,6 +101,7 @@ $(function(){
       clearTimeout(search_handler);
     }
     var $this = $(this);
+
     if($this.val() === ''){
       queryURLs = []; // clear the query url array
       testSearching();
@@ -107,6 +109,7 @@ $(function(){
     }
     search_handler = setTimeout(function(){
       $('#body').addClass('show-result');
+      $searchTarget.empty();
       chrome.history.search({text: $this.val()}, function(results){
         queryURLs = $.map(results, function(hisItem){return '"' + hisItem.url + '"'}).join(',');
         if(queryURLs.length){
@@ -145,6 +148,7 @@ $(function(){
   // canvas draw complete event handler
   $(canvas).on('draw', function(e, rect){
     $('#body').addClass('show-result');
+    $searchTarget.empty();
     var tmpCanvas = $('<canvas>').get(0);
     tmpCanvas.width = canvas.width; tmpCanvas.height = canvas.height;
     tmpCanvas.getContext('2d').putImageData(
@@ -166,4 +170,7 @@ $(function(){
     canvasResult = null; // unset canvasResult
     testSearching();
   });
+  $('header').on('select', function(e){
+    e.preventDefault();
+  })
 });
