@@ -14,10 +14,6 @@
       "js": ["javascripts/jquery.min.js", "javascripts/watchr.js"]
     }
   ],
-  "browser_action": {
-     "default_icon": "images/history.png",
-     "default_title": "Show link record history!"
-   },
   "chrome_url_overrides": {
     "history": "html/history.html"
   },

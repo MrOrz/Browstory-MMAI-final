@@ -238,16 +238,10 @@
     }
   );
 
-  // add button click listener
-  chrome.browserAction.onClicked.addListener(function(tab) {
-    var history_url = chrome.extension.getURL('html/history-view.html');
-    chrome.tabs.create({url: history_url});
-  });
-
   // change tab
   // update the original tab's active time
   //
-  chrome.tabs.onActiveChanged.addListener(function(tabId, selectInfo){
+  chrome.tabs.onSelectionChanged.addListener(function(tabId, selectInfo){
     var origSelectedTab = selectedTab(selectInfo.windowId, tabId), // set new selected tab
       tab = selectedTab();
     //console.log('Tab changed from' , origSelectedTab, ' to tab ', tab );
@@ -256,10 +250,6 @@
         // take screenshot if the selected tab is in _pendingScreenshot
         screenshot.process(tab.windowId, tab.tabId);
       }
-  });
-
-  chrome.history.onVisited.addListener(function(result) {
-    console.log('history', result);
   });
 
   console.log('background.js initialized.');

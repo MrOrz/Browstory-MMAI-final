@@ -98,7 +98,7 @@
     return ($child.innerWidth() >= bodyWidth);
   };
   $container = findContainer($body);
-  console.log('container: ', $container);
+  //console.log('container: ', $container);
   containers.push({
     left: $container.offset().left,
     top: $container.offset().top,
@@ -118,7 +118,7 @@
 
   for(var i = 2; i <= 3; i+=1){
     $container = findContainer($container);
-    console.log('level', i, 'container: ', $container);
+    //console.log('level', i, 'container: ', $container);
     if($.isEmptyObject($container)){ // no container will be found any further
       break;
     }
@@ -130,14 +130,14 @@
     });
   }
 
-  console.log('container[]:', containers);
+  //console.log('container[]:', containers);
 
   // Send sendRequest on window.onload,
   // right after all images are received.
   //
-  console.log('doucumnet.readyState:', document.readyState);
+  //console.log('doucumnet.readyState:', document.readyState);
   var sendRequest = function(){
-    console.log('window loaded.');
+    //console.log('window loaded.');
     // update top information using document.body.scrollTop
     $.each(containers, function(idx){
       containers[idx].top -= document.body.scrollTop;
